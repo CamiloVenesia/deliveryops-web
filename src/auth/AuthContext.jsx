@@ -1,7 +1,5 @@
 import {
-    createContext,
     useCallback,
-    useContext,
     useEffect,
     useMemo,
     useState
@@ -20,8 +18,9 @@ import {
     setAuthFailureHandler
 } from '../api/client.js';
 
-const AuthContext =
-    createContext(null);
+import {
+    AuthContext
+} from './authContext.js';
 
 export function AuthProvider({
     children
@@ -72,12 +71,10 @@ export function AuthProvider({
 
             async function bootstrap() {
                 try {
-                    await authService
-                        .refresh();
+                    await authService.refresh();
 
                     const currentUser =
-                        await authService
-                            .me();
+                        await authService.me();
 
                     if (!cancelled) {
                         setUser(
@@ -115,10 +112,9 @@ export function AuthProvider({
                 credentials
             ) => {
                 const result =
-                    await authService
-                        .login(
-                            credentials
-                        );
+                    await authService.login(
+                        credentials
+                    );
 
                 if (
                     !result
@@ -134,12 +130,10 @@ export function AuthProvider({
 
                 if (
                     !authenticatedUser ||
-                    !authenticatedUser
-                        .role
+                    !authenticatedUser.role
                 ) {
                     authenticatedUser =
-                        await authService
-                            .me();
+                        await authService.me();
                 }
 
                 setUser(
@@ -155,10 +149,10 @@ export function AuthProvider({
         useCallback(
             async () => {
                 try {
-                    await authService
-                        .logout();
+                    await authService.logout();
                 } catch {
-                    // La sesión local igualmente debe cerrarse.
+                    // Aunque falle la petición,
+                    // la sesión local debe cerrarse.
                 } finally {
                     clearSession();
                 }
@@ -172,6 +166,7 @@ export function AuthProvider({
         useMemo(
             () => ({
                 user,
+
                 role:
                     user?.role ??
                     null,
@@ -179,7 +174,9 @@ export function AuthProvider({
                 initializing,
 
                 isAuthenticated:
-                    Boolean(user),
+                    Boolean(
+                        user
+                    ),
 
                 login,
                 logout
@@ -194,24 +191,11 @@ export function AuthProvider({
 
     return (
         <AuthContext.Provider
-            value={value}
+            value={
+                value
+            }
         >
             {children}
         </AuthContext.Provider>
     );
-}
-
-export function useAuth() {
-    const context =
-        useContext(
-            AuthContext
-        );
-
-    if (!context) {
-        throw new Error(
-            'useAuth debe utilizarse dentro de AuthProvider.'
-        );
-    }
-
-    return context;
 }

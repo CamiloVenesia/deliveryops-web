@@ -1,4 +1,9 @@
 import {
+    lazy,
+    Suspense
+} from 'react';
+
+import {
     Navigate,
     Route,
     Routes
@@ -11,124 +16,199 @@ import {
 
 import AppShell from './components/AppShell.jsx';
 
-import LoginPage from './pages/LoginPage.jsx';
-import DashboardPage from './pages/DashboardPage.jsx';
-import OrdersPage from './pages/OrdersPage.jsx';
-import DeliveriesPage from './pages/DeliveriesPage.jsx';
-import UsersPage from './pages/UsersPage.jsx';
-import ProfilePage from './pages/ProfilePage.jsx';
-import NotFoundPage from './pages/NotFoundPage.jsx';
+import {
+    LoadingState
+} from './components/ui.jsx';
+
+const LoginPage =
+    lazy(
+        () =>
+            import(
+                './pages/LoginPage.jsx'
+            )
+    );
+
+const DashboardPage =
+    lazy(
+        () =>
+            import(
+                './pages/DashboardPage.jsx'
+            )
+    );
+
+const OrdersPage =
+    lazy(
+        () =>
+            import(
+                './pages/OrdersPage.jsx'
+            )
+    );
+
+const DeliveriesPage =
+    lazy(
+        () =>
+            import(
+                './pages/DeliveriesPage.jsx'
+            )
+    );
+
+const UsersPage =
+    lazy(
+        () =>
+            import(
+                './pages/UsersPage.jsx'
+            )
+    );
+
+const ProfilePage =
+    lazy(
+        () =>
+            import(
+                './pages/ProfilePage.jsx'
+            )
+    );
+
+const NotFoundPage =
+    lazy(
+        () =>
+            import(
+                './pages/NotFoundPage.jsx'
+            )
+    );
+
+function RouteLoading() {
+    return (
+        <div className="full-screen-loader">
+            <LoadingState
+                title="Cargando DeliveryOps"
+                description="Preparando tu espacio de trabajo."
+            />
+        </div>
+    );
+}
 
 export default function App() {
     return (
-        <Routes>
-            <Route
-                path="/login"
-                element={<LoginPage />}
-            />
-
-            <Route
-                element={<ProtectedRoute />}
-            >
+        <Suspense
+            fallback={
+                <RouteLoading />
+            }
+        >
+            <Routes>
                 <Route
-                    element={<AppShell />}
+                    path="/login"
+                    element={
+                        <LoginPage />
+                    }
+                />
+
+                <Route
+                    element={
+                        <ProtectedRoute />
+                    }
                 >
                     <Route
-                        index
                         element={
-                            <DashboardPage />
-                        }
-                    />
-
-                    <Route
-                        element={
-                            <RoleRoute
-                                allowedRoles={[
-                                    'admin',
-                                    'customer'
-                                ]}
-                            />
+                            <AppShell />
                         }
                     >
                         <Route
-                            path="orders"
+                            index
                             element={
-                                <OrdersPage />
+                                <DashboardPage />
                             }
                         />
-                    </Route>
 
-                    <Route
-                        element={
-                            <RoleRoute
-                                allowedRoles={[
-                                    'admin',
-                                    'customer',
-                                    'driver'
-                                ]}
-                            />
-                        }
-                    >
                         <Route
-                            path="deliveries"
                             element={
-                                <DeliveriesPage />
+                                <RoleRoute
+                                    allowedRoles={[
+                                        'admin',
+                                        'customer'
+                                    ]}
+                                />
                             }
-                        />
-                    </Route>
-
-                    <Route
-                        element={
-                            <RoleRoute
-                                allowedRoles={[
-                                    'admin'
-                                ]}
+                        >
+                            <Route
+                                path="orders"
+                                element={
+                                    <OrdersPage />
+                                }
                             />
-                        }
-                    >
+                        </Route>
+
                         <Route
-                            path="users"
                             element={
-                                <UsersPage />
+                                <RoleRoute
+                                    allowedRoles={[
+                                        'admin',
+                                        'customer',
+                                        'driver'
+                                    ]}
+                                />
+                            }
+                        >
+                            <Route
+                                path="deliveries"
+                                element={
+                                    <DeliveriesPage />
+                                }
+                            />
+                        </Route>
+
+                        <Route
+                            element={
+                                <RoleRoute
+                                    allowedRoles={[
+                                        'admin'
+                                    ]}
+                                />
+                            }
+                        >
+                            <Route
+                                path="users"
+                                element={
+                                    <UsersPage />
+                                }
+                            />
+                        </Route>
+
+                        <Route
+                            path="profile"
+                            element={
+                                <ProfilePage />
+                            }
+                        />
+
+                        <Route
+                            path="404"
+                            element={
+                                <NotFoundPage />
+                            }
+                        />
+
+                        <Route
+                            path="*"
+                            element={
+                                <Navigate
+                                    to="/404"
+                                    replace
+                                />
                             }
                         />
                     </Route>
-
-                    <Route
-                        path="profile"
-                        element={
-                            <ProfilePage />
-                        }
-                    />
-
-                    <Route
-                        path="404"
-                        element={
-                            <NotFoundPage />
-                        }
-                    />
-
-                    <Route
-                        path="*"
-                        element={
-                            <Navigate
-                                to="/404"
-                                replace
-                            />
-                        }
-                    />
                 </Route>
-            </Route>
 
-            <Route
-                path="*"
-                element={
-                    <Navigate
-                        to="/login"
-                        replace
-                    />
-                }
-            />
-        </Routes>
+                <Route
+                    path="*"
+                    element={
+                        <Navigate
+                            to="/login"
+                            replace
+                        />
+                    }
+                />
+            </Routes>
+        </Suspense>
     );
 }

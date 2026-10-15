@@ -11,6 +11,7 @@ import {
 } from 'react';
 
 import {
+    roleLabel,
     statusLabel
 } from '../utils/formatters.js';
 
@@ -149,17 +150,33 @@ export function StatusBadge({
             'danger'
     };
 
+    const roleStatuses = [
+        'admin',
+        'customer',
+        'driver',
+        'store'
+    ];
+
     const tone =
         classMap[status] ??
         'neutral';
+
+    const label =
+        roleStatuses.includes(
+            status
+        )
+            ? roleLabel(
+                  status
+              )
+            : statusLabel(
+                  status
+              );
 
     return (
         <span
             className={`badge badge--${tone}`}
         >
-            {statusLabel(
-                status
-            )}
+            {label}
         </span>
     );
 }
@@ -334,11 +351,10 @@ export function Modal({
                 );
 
             return () => {
-                document
-                    .removeEventListener(
-                        'keydown',
-                        handleKeyDown
-                    );
+                document.removeEventListener(
+                    'keydown',
+                    handleKeyDown
+                );
 
                 document.body
                     .classList
@@ -361,7 +377,9 @@ export function Modal({
         <div
             className="modal-backdrop"
             onMouseDown={
-                (event) => {
+                (
+                    event
+                ) => {
                     if (
                         event.target ===
                         event.currentTarget

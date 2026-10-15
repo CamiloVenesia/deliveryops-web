@@ -6,7 +6,7 @@ import {
 
 import {
     useAuth
-} from './AuthContext.jsx';
+} from './useAuth.js';
 
 import {
     LoadingState

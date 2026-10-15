@@ -1,5 +1,4 @@
 import {
-    useEffect,
     useMemo,
     useState
 } from 'react';
@@ -26,7 +25,7 @@ import {
 
 import {
     useAuth
-} from '../auth/AuthContext.jsx';
+} from '../auth/useAuth.js';
 
 import {
     Brand
@@ -81,21 +80,6 @@ export default function AppShell() {
     ] =
         useState(false);
 
-    useEffect(
-        () => {
-            setSidebarOpen(
-                false
-            );
-
-            setProfileOpen(
-                false
-            );
-        },
-        [
-            location.pathname
-        ]
-    );
-
     const navigation =
         useMemo(
             () => {
@@ -103,10 +87,13 @@ export default function AppShell() {
                     {
                         label:
                             'Dashboard',
+
                         path:
                             '/',
+
                         icon:
                             LayoutDashboard,
+
                         roles: [
                             'admin',
                             'customer',
@@ -118,10 +105,13 @@ export default function AppShell() {
                     {
                         label:
                             'Pedidos',
+
                         path:
                             '/orders',
+
                         icon:
                             Package,
+
                         roles: [
                             'admin',
                             'customer'
@@ -131,10 +121,13 @@ export default function AppShell() {
                     {
                         label:
                             'Entregas',
+
                         path:
                             '/deliveries',
+
                         icon:
                             Truck,
+
                         roles: [
                             'admin',
                             'customer',
@@ -145,10 +138,13 @@ export default function AppShell() {
                     {
                         label:
                             'Usuarios',
+
                         path:
                             '/users',
+
                         icon:
                             UsersRound,
+
                         roles: [
                             'admin'
                         ]
@@ -156,11 +152,12 @@ export default function AppShell() {
                 ];
 
                 return items.filter(
-                    (item) =>
-                        item.roles
-                            .includes(
-                                role
-                            )
+                    (
+                        item
+                    ) =>
+                        item.roles.includes(
+                            role
+                        )
                 );
             },
             [
@@ -175,6 +172,10 @@ export default function AppShell() {
         'DeliveryOps';
 
     async function handleLogout() {
+        setProfileOpen(
+            false
+        );
+
         await logout();
 
         navigate(
@@ -183,6 +184,16 @@ export default function AppShell() {
                 replace:
                     true
             }
+        );
+    }
+
+    function handleProfileNavigation() {
+        setProfileOpen(
+            false
+        );
+
+        navigate(
+            '/profile'
         );
     }
 
@@ -248,7 +259,7 @@ export default function AppShell() {
                         </strong>
 
                         <span>
-                            Workspace principal
+                            Centro operativo
                         </span>
                     </div>
                 </div>
@@ -276,6 +287,11 @@ export default function AppShell() {
                                     end={
                                         item.path ===
                                         '/'
+                                    }
+                                    onClick={() =>
+                                        setSidebarOpen(
+                                            false
+                                        )
                                     }
                                     className={
                                         ({
@@ -311,11 +327,11 @@ export default function AppShell() {
 
                         <div>
                             <strong>
-                                Sesión segura
+                                Sesión protegida
                             </strong>
 
                             <span>
-                                JWT + Refresh Rotation
+                                Protección de acceso activa
                             </span>
                         </div>
                     </div>
@@ -323,6 +339,11 @@ export default function AppShell() {
                     <NavLink
                         to="/profile"
                         className="sidebar__profile"
+                        onClick={() =>
+                            setSidebarOpen(
+                                false
+                            )
+                        }
                     >
                         <span className="avatar">
                             {getInitials(
@@ -397,6 +418,9 @@ export default function AppShell() {
                                             !current
                                     )
                                 }
+                                aria-expanded={
+                                    profileOpen
+                                }
                             >
                                 <span className="avatar avatar--light">
                                     {getInitials(
@@ -429,10 +453,8 @@ export default function AppShell() {
                                 <div className="profile-menu__dropdown">
                                     <button
                                         type="button"
-                                        onClick={() =>
-                                            navigate(
-                                                '/profile'
-                                            )
+                                        onClick={
+                                            handleProfileNavigation
                                         }
                                     >
                                         <UserRound

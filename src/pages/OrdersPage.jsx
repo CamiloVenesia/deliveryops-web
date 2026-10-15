@@ -28,7 +28,7 @@ import {
 
 import {
     useAuth
-} from '../auth/AuthContext.jsx';
+} from '../auth/useAuth.js';
 
 import {
     Button,
@@ -44,15 +44,18 @@ import {
 
 import {
     useToast
-} from '../components/ToastProvider.jsx';
+} from '../components/useToast.js';
 
 import {
     formatDateTime,
     formatMoney,
     getEntityId,
     getPersonName,
-    shortId
+    shortId,
+    statusLabel
 } from '../utils/formatters.js';
+
+const EMPTY_ARRAY = [];
 
 const statusOptions = [
     'created',
@@ -65,8 +68,7 @@ const statusOptions = [
 
 export default function OrdersPage() {
     const {
-        role,
-        user
+        role
     } =
         useAuth();
 
@@ -161,12 +163,12 @@ export default function OrdersPage() {
     const orders =
         ordersQuery.data
             ?.items ??
-        [];
+        EMPTY_ARRAY;
 
     const users =
         usersQuery.data
             ?.items ??
-        [];
+        EMPTY_ARRAY;
 
     const userMap =
         useMemo(
@@ -221,6 +223,9 @@ export default function OrdersPage() {
                                 order.id,
                                 order.deliveryAddress,
                                 order.status,
+                                statusLabel(
+                                    order.status
+                                ),
                                 customer?.email,
                                 getPersonName(
                                     customer
@@ -266,19 +271,17 @@ export default function OrdersPage() {
                 ),
 
             onSuccess: () => {
-                queryClient
-                    .invalidateQueries({
-                        queryKey: [
-                            'orders'
-                        ]
-                    });
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        'orders'
+                    ]
+                });
 
-                queryClient
-                    .invalidateQueries({
-                        queryKey: [
-                            'dashboard'
-                        ]
-                    });
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        'dashboard'
+                    ]
+                });
 
                 pushToast({
                     title:
@@ -290,7 +293,7 @@ export default function OrdersPage() {
 
             onError: (
                 error
-            ) => {
+            ) =>
                 pushToast({
                     type:
                         'error',
@@ -300,8 +303,7 @@ export default function OrdersPage() {
                         getApiErrorMessage(
                             error
                         )
-                });
-            }
+                })
         });
 
     const deleteMutation =
@@ -318,19 +320,17 @@ export default function OrdersPage() {
                     null
                 );
 
-                queryClient
-                    .invalidateQueries({
-                        queryKey: [
-                            'orders'
-                        ]
-                    });
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        'orders'
+                    ]
+                });
 
-                queryClient
-                    .invalidateQueries({
-                        queryKey: [
-                            'dashboard'
-                        ]
-                    });
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        'dashboard'
+                    ]
+                });
 
                 pushToast({
                     title:
@@ -389,8 +389,7 @@ export default function OrdersPage() {
                                 event
                             ) =>
                                 setSearch(
-                                    event
-                                        .target
+                                    event.target
                                         .value
                                 )
                         }
@@ -407,8 +406,7 @@ export default function OrdersPage() {
                                 event
                             ) =>
                                 setStatusFilter(
-                                    event
-                                        .target
+                                    event.target
                                         .value
                                 )
                         }
@@ -429,9 +427,9 @@ export default function OrdersPage() {
                                         status
                                     }
                                 >
-                                    {
+                                    {statusLabel(
                                         status
-                                    }
+                                    )}
                                 </option>
                             )
                         )}
@@ -506,6 +504,12 @@ export default function OrdersPage() {
                                                 customerId
                                             );
 
+                                        const itemCount =
+                                            order
+                                                .items
+                                                ?.length ??
+                                            0;
+
                                         return (
                                             <tr
                                                 key={
@@ -532,12 +536,12 @@ export default function OrdersPage() {
 
                                                             <span>
                                                                 {
-                                                                    order
-                                                                        .items
-                                                                        ?.length ??
-                                                                    0
+                                                                    itemCount
                                                                 }{' '}
-                                                                items
+                                                                {itemCount ===
+                                                                1
+                                                                    ? 'item'
+                                                                    : 'items'}
                                                             </span>
                                                         </div>
                                                     </div>
@@ -595,6 +599,7 @@ export default function OrdersPage() {
                                                                     updateStatusMutation.mutate(
                                                                         {
                                                                             id,
+
                                                                             status:
                                                                                 event
                                                                                     .target
@@ -615,9 +620,9 @@ export default function OrdersPage() {
                                                                             status
                                                                         }
                                                                     >
-                                                                        {
+                                                                        {statusLabel(
                                                                             status
-                                                                        }
+                                                                        )}
                                                                     </option>
                                                                 )
                                                             )}
@@ -740,9 +745,6 @@ export default function OrdersPage() {
                 }
                 isAdmin={
                     isAdmin
-                }
-                currentUser={
-                    user
                 }
             />
 
@@ -870,8 +872,10 @@ function CreateOrderModal({
             {
                 name:
                     '',
+
                 quantity:
                     1,
+
                 price:
                     ''
             }
@@ -896,23 +900,22 @@ function CreateOrderModal({
                 ),
 
             onSuccess: () => {
-                queryClient
-                    .invalidateQueries({
-                        queryKey: [
-                            'orders'
-                        ]
-                    });
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        'orders'
+                    ]
+                });
 
-                queryClient
-                    .invalidateQueries({
-                        queryKey: [
-                            'dashboard'
-                        ]
-                    });
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        'dashboard'
+                    ]
+                });
 
                 pushToast({
                     title:
                         'Pedido creado',
+
                     message:
                         'El nuevo pedido ya está disponible.'
                 });
@@ -927,8 +930,10 @@ function CreateOrderModal({
                 pushToast({
                     type:
                         'error',
+
                     title:
                         'No se pudo crear',
+
                     message:
                         getApiErrorMessage(
                             error
@@ -953,8 +958,10 @@ function CreateOrderModal({
             {
                 name:
                     '',
+
                 quantity:
                     1,
+
                 price:
                     ''
             }
@@ -979,6 +986,7 @@ function CreateOrderModal({
                         index
                             ? {
                                   ...item,
+
                                   [field]:
                                       value
                               }
@@ -1236,11 +1244,14 @@ function CreateOrderModal({
                                         current
                                     ) => [
                                         ...current,
+
                                         {
                                             name:
                                                 '',
+
                                             quantity:
                                                 1,
+
                                             price:
                                                 ''
                                         }
@@ -1344,6 +1355,7 @@ function CreateOrderModal({
                                             index
                                         )
                                     }
+                                    aria-label="Eliminar item"
                                 >
                                     <Trash2
                                         size={
@@ -1371,7 +1383,9 @@ function OrderDetailsModal({
     return (
         <Modal
             open={
-                Boolean(order)
+                Boolean(
+                    order
+                )
             }
             onClose={
                 onClose
@@ -1428,15 +1442,13 @@ function OrderDetailsModal({
 
                 <div className="detail-items">
                     {(order.items ??
-                        []).map(
+                        EMPTY_ARRAY).map(
                         (
                             item,
                             index
                         ) => (
                             <div
-                                key={
-                                    index
-                                }
+                                key={`${item.name ?? 'item'}-${index}`}
                             >
                                 <span>
                                     {item.name ??
@@ -1509,12 +1521,11 @@ function ReceiptModal({
                 ),
 
             onSuccess: () => {
-                queryClient
-                    .invalidateQueries({
-                        queryKey: [
-                            'orders'
-                        ]
-                    });
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        'orders'
+                    ]
+                });
 
                 pushToast({
                     title:
@@ -1534,8 +1545,10 @@ function ReceiptModal({
                 pushToast({
                     type:
                         'error',
+
                     title:
                         'No se pudo cargar',
+
                     message:
                         getApiErrorMessage(
                             error
@@ -1546,7 +1559,9 @@ function ReceiptModal({
     return (
         <Modal
             open={
-                Boolean(order)
+                Boolean(
+                    order
+                )
             }
             onClose={
                 onClose
@@ -1608,8 +1623,7 @@ function ReceiptModal({
                             event
                         ) =>
                             setFile(
-                                event
-                                    .target
+                                event.target
                                     .files?.[0] ??
                                     null
                             )

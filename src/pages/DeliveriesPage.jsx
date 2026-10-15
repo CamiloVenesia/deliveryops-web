@@ -29,11 +29,11 @@ import {
 
 import {
     useAuth
-} from '../auth/AuthContext.jsx';
+} from '../auth/useAuth.js';
 
 import {
     useToast
-} from '../components/ToastProvider.jsx';
+} from '../components/useToast.js';
 
 import {
     Button,
@@ -51,8 +51,11 @@ import {
     formatDateTime,
     getEntityId,
     getPersonName,
-    shortId
+    shortId,
+    statusLabel
 } from '../utils/formatters.js';
+
+const EMPTY_ARRAY = [];
 
 const statusOptions = [
     'pending',
@@ -187,17 +190,17 @@ export default function DeliveriesPage() {
     const deliveries =
         deliveriesQuery.data
             ?.items ??
-        [];
+        EMPTY_ARRAY;
 
     const users =
         usersQuery.data
             ?.items ??
-        [];
+        EMPTY_ARRAY;
 
     const orders =
         ordersQuery.data
             ?.items ??
-        [];
+        EMPTY_ARRAY;
 
     const usersMap =
         useMemo(
@@ -279,7 +282,10 @@ export default function DeliveriesPage() {
                                 getPersonName(
                                     driver
                                 ),
-                                delivery.status
+                                delivery.status,
+                                statusLabel(
+                                    delivery.status
+                                )
                             ]
                                 .filter(
                                     Boolean
@@ -315,26 +321,23 @@ export default function DeliveriesPage() {
                 id,
                 status
             }) =>
-                deliveryService
-                    .updateStatus(
-                        id,
-                        status
-                    ),
+                deliveryService.updateStatus(
+                    id,
+                    status
+                ),
 
             onSuccess: () => {
-                queryClient
-                    .invalidateQueries({
-                        queryKey: [
-                            'deliveries'
-                        ]
-                    });
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        'deliveries'
+                    ]
+                });
 
-                queryClient
-                    .invalidateQueries({
-                        queryKey: [
-                            'dashboard'
-                        ]
-                    });
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        'dashboard'
+                    ]
+                });
 
                 pushToast({
                     title:
@@ -348,8 +351,10 @@ export default function DeliveriesPage() {
                 pushToast({
                     type:
                         'error',
+
                     title:
                         'No se pudo actualizar',
+
                     message:
                         getApiErrorMessage(
                             error
@@ -371,12 +376,17 @@ export default function DeliveriesPage() {
                     null
                 );
 
-                queryClient
-                    .invalidateQueries({
-                        queryKey: [
-                            'deliveries'
-                        ]
-                    });
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        'deliveries'
+                    ]
+                });
+
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        'dashboard'
+                    ]
+                });
 
                 pushToast({
                     title:
@@ -390,8 +400,10 @@ export default function DeliveriesPage() {
                 pushToast({
                     type:
                         'error',
+
                     title:
                         'No se pudo eliminar',
+
                     message:
                         getApiErrorMessage(
                             error
@@ -407,7 +419,7 @@ export default function DeliveriesPage() {
                 description={
                     role ===
                     'driver'
-                        ? 'Gestioná las entregas que fueron asignadas a tu cuenta.'
+                        ? 'Gestioná las entregas asignadas a tu cuenta.'
                         : 'Seguimiento operativo de las entregas.'
                 }
             >
@@ -438,8 +450,7 @@ export default function DeliveriesPage() {
                                 event
                             ) =>
                                 setSearch(
-                                    event
-                                        .target
+                                    event.target
                                         .value
                                 )
                         }
@@ -456,8 +467,7 @@ export default function DeliveriesPage() {
                                 event
                             ) =>
                                 setStatusFilter(
-                                    event
-                                        .target
+                                    event.target
                                         .value
                                 )
                         }
@@ -478,9 +488,9 @@ export default function DeliveriesPage() {
                                         status
                                     }
                                 >
-                                    {
+                                    {statusLabel(
                                         status
-                                    }
+                                    )}
                                 </option>
                             )
                         )}
@@ -590,7 +600,7 @@ export default function DeliveriesPage() {
                                                             </strong>
 
                                                             <span>
-                                                                Delivery
+                                                                Entrega
                                                             </span>
                                                         </div>
                                                     </div>
@@ -663,6 +673,7 @@ export default function DeliveriesPage() {
                                                                     statusMutation.mutate(
                                                                         {
                                                                             id,
+
                                                                             status:
                                                                                 event
                                                                                     .target
@@ -683,9 +694,9 @@ export default function DeliveriesPage() {
                                                                             status
                                                                         }
                                                                     >
-                                                                        {
+                                                                        {statusLabel(
                                                                             status
-                                                                        }
+                                                                        )}
                                                                     </option>
                                                                 )
                                                             )}
@@ -853,7 +864,7 @@ export default function DeliveriesPage() {
                     )
                 }
                 title="Eliminar entrega"
-                description="La entrega se eliminará del sistema."
+                description="Esta acción no se puede deshacer."
                 size="sm"
                 footer={
                     <>
@@ -887,7 +898,7 @@ export default function DeliveriesPage() {
                 }
             >
                 <p className="modal-copy">
-                    Confirmá que querés eliminar la entrega{' '}
+                    Vas a eliminar la entrega{' '}
                     <strong>
                         #
                         {shortId(
@@ -963,23 +974,28 @@ function CreateDeliveryModal({
                 }),
 
             onSuccess: () => {
-                queryClient
-                    .invalidateQueries({
-                        queryKey: [
-                            'deliveries'
-                        ]
-                    });
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        'deliveries'
+                    ]
+                });
 
-                queryClient
-                    .invalidateQueries({
-                        queryKey: [
-                            'orders'
-                        ]
-                    });
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        'orders'
+                    ]
+                });
+
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        'dashboard'
+                    ]
+                });
 
                 pushToast({
                     title:
                         'Entrega creada',
+
                     message:
                         'El pedido fue asignado correctamente.'
                 });
@@ -1005,8 +1021,10 @@ function CreateDeliveryModal({
                 pushToast({
                     type:
                         'error',
+
                     title:
                         'No se pudo crear',
+
                     message:
                         getApiErrorMessage(
                             error
@@ -1068,8 +1086,7 @@ function CreateDeliveryModal({
                                 event
                             ) =>
                                 setOrder(
-                                    event
-                                        .target
+                                    event.target
                                         .value
                                 )
                         }
@@ -1122,8 +1139,7 @@ function CreateDeliveryModal({
                                 event
                             ) =>
                                 setDriver(
-                                    event
-                                        .target
+                                    event.target
                                         .value
                                 )
                         }
@@ -1176,8 +1192,7 @@ function CreateDeliveryModal({
                                 event
                             ) =>
                                 setPriority(
-                                    event
-                                        .target
+                                    event.target
                                         .value
                                 )
                         }
@@ -1305,21 +1320,19 @@ function DeliveryReceiptModal({
     const mutation =
         useMutation({
             mutationFn: () =>
-                deliveryService
-                    .uploadReceipt(
-                        getEntityId(
-                            delivery
-                        ),
-                        file
+                deliveryService.uploadReceipt(
+                    getEntityId(
+                        delivery
                     ),
+                    file
+                ),
 
             onSuccess: () => {
-                queryClient
-                    .invalidateQueries({
-                        queryKey: [
-                            'deliveries'
-                        ]
-                    });
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        'deliveries'
+                    ]
+                });
 
                 pushToast({
                     title:
@@ -1339,8 +1352,10 @@ function DeliveryReceiptModal({
                 pushToast({
                     type:
                         'error',
+
                     title:
                         'No se pudo cargar',
+
                     message:
                         getApiErrorMessage(
                             error
@@ -1415,8 +1430,7 @@ function DeliveryReceiptModal({
                             event
                         ) =>
                             setFile(
-                                event
-                                    .target
+                                event.target
                                     .files?.[0] ??
                                     null
                             )

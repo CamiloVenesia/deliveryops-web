@@ -22,7 +22,7 @@ import {
 
 import {
     useAuth
-} from '../auth/AuthContext.jsx';
+} from '../auth/useAuth.js';
 
 import {
     Brand

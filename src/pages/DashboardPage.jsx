@@ -29,7 +29,7 @@ import {
 
 import {
     useAuth
-} from '../auth/AuthContext.jsx';
+} from '../auth/useAuth.js';
 
 import {
     deliveryService,
@@ -52,6 +52,25 @@ import {
     shortId,
     statusLabel
 } from '../utils/formatters.js';
+
+const EMPTY_ARRAY = [];
+
+const DELIVERY_STATUS_COLORS = {
+    pending:
+        'var(--warning-500)',
+
+    assigned:
+        'var(--brand-400)',
+
+    in_transit:
+        'var(--brand-600)',
+
+    delivered:
+        'var(--success-500)',
+
+    cancelled:
+        'var(--danger-500)'
+};
 
 export default function DashboardPage() {
     const {
@@ -88,6 +107,7 @@ export default function DashboardPage() {
                 orderService.list({
                     page:
                         1,
+
                     limit:
                         50
                 }),
@@ -107,6 +127,7 @@ export default function DashboardPage() {
                 deliveryService.list({
                     page:
                         1,
+
                     limit:
                         50
                 }),
@@ -126,6 +147,7 @@ export default function DashboardPage() {
                 userService.list({
                     page:
                         1,
+
                     limit:
                         50
                 }),
@@ -138,17 +160,17 @@ export default function DashboardPage() {
     const orders =
         ordersQuery.data
             ?.items ??
-        [];
+        EMPTY_ARRAY;
 
     const deliveries =
         deliveriesQuery.data
             ?.items ??
-        [];
+        EMPTY_ARRAY;
 
     const users =
         usersQuery.data
             ?.items ??
-        [];
+        EMPTY_ARRAY;
 
     const isLoading =
         ordersQuery.isLoading ||
@@ -174,10 +196,12 @@ export default function DashboardPage() {
                             status
                         ) => ({
                             status,
+
                             name:
                                 statusLabel(
                                     status
                                 ),
+
                             value:
                                 orders.filter(
                                     (
@@ -208,7 +232,8 @@ export default function DashboardPage() {
                     'pending',
                     'assigned',
                     'in_transit',
-                    'delivered'
+                    'delivered',
+                    'cancelled'
                 ];
 
                 return statuses
@@ -217,10 +242,12 @@ export default function DashboardPage() {
                             status
                         ) => ({
                             status,
+
                             name:
                                 statusLabel(
                                     status
                                 ),
+
                             value:
                                 deliveries.filter(
                                     (
@@ -253,14 +280,18 @@ export default function DashboardPage() {
                     ) => ({
                         type:
                             'order',
+
                         id:
                             order._id ??
                             order.id,
+
                         status:
                             order.status,
+
                         date:
                             order.updatedAt ??
                             order.createdAt,
+
                         value:
                             order.total
                     })
@@ -272,11 +303,14 @@ export default function DashboardPage() {
                     ) => ({
                         type:
                             'delivery',
+
                         id:
                             delivery._id ??
                             delivery.id,
+
                         status:
                             delivery.status,
+
                         date:
                             delivery.updatedAt ??
                             delivery.createdAt ??
@@ -343,6 +377,11 @@ export default function DashboardPage() {
                 )
         ).length;
 
+    const visibleOrdersTotal =
+        ordersQuery.data
+            ?.total ??
+        orders.length;
+
     if (
         role ===
         'store'
@@ -350,7 +389,7 @@ export default function DashboardPage() {
         return (
             <>
                 <PageHeader
-                    eyebrow="Overview"
+                    eyebrow="Resumen"
                     title={`Hola, ${
                         user
                             ?.firstName ??
@@ -364,8 +403,8 @@ export default function DashboardPage() {
                         icon={
                             Package
                         }
-                        title="Módulo comercio preparado para la próxima etapa"
-                        description="El backend ya reconoce este rol, pero sus operaciones específicas todavía no están habilitadas."
+                        title="Módulo de comercio próximamente"
+                        description="Tu cuenta está preparada para utilizar las funciones comerciales que incorporaremos en la próxima etapa."
                     />
                 </Card>
             </>
@@ -375,7 +414,7 @@ export default function DashboardPage() {
     return (
         <>
             <PageHeader
-                eyebrow="Overview"
+                eyebrow="Resumen"
                 title="Resumen operativo"
                 description="Una vista consolidada del estado actual de tu operación."
             />
@@ -402,7 +441,12 @@ export default function DashboardPage() {
                                         ? 'Pedidos activos'
                                         : 'Pedidos en operación'
                                 }
-                                description={`${orders.length} visibles en total`}
+                                description={`${visibleOrdersTotal} ${
+                                    visibleOrdersTotal ===
+                                    1
+                                        ? 'pedido visible'
+                                        : 'pedidos visibles'
+                                }`}
                             />
                         )}
 
@@ -430,7 +474,7 @@ export default function DashboardPage() {
                                     delivered
                                 }
                                 label="Entregas completadas"
-                                description="Dentro de la vista actual"
+                                description="Finalizadas correctamente"
                             />
                         )}
 
@@ -460,10 +504,13 @@ export default function DashboardPage() {
                                 }
                                 tone="warning"
                                 value={
+                                    deliveriesQuery
+                                        .data
+                                        ?.total ??
                                     deliveries.length
                                 }
                                 label="Entregas asignadas"
-                                description="Tu carga operativa visible"
+                                description="Entregas visibles en tu cuenta"
                             />
                         )}
                     </div>
@@ -499,10 +546,13 @@ export default function DashboardPage() {
                                                 margin={{
                                                     top:
                                                         12,
+
                                                     right:
                                                         6,
+
                                                     left:
                                                         -22,
+
                                                     bottom:
                                                         0
                                                 }}
@@ -551,8 +601,10 @@ export default function DashboardPage() {
                                                     contentStyle={{
                                                         border:
                                                             '1px solid var(--border-default)',
+
                                                         borderRadius:
                                                             12,
+
                                                         boxShadow:
                                                             'var(--shadow-md)'
                                                     }}
@@ -591,11 +643,11 @@ export default function DashboardPage() {
                                 <div className="panel-header">
                                     <div>
                                         <h2>
-                                            Entregas
+                                            Estado de entregas
                                         </h2>
 
                                         <p>
-                                            Estado actual.
+                                            Distribución según el estado actual.
                                         </p>
                                     </div>
                                 </div>
@@ -629,23 +681,18 @@ export default function DashboardPage() {
                                                     >
                                                         {deliveryStatusData.map(
                                                             (
-                                                                item,
-                                                                index
+                                                                item
                                                             ) => (
                                                                 <Cell
                                                                     key={
                                                                         item.status
                                                                     }
                                                                     fill={
-                                                                        [
-                                                                            'var(--warning-500)',
-                                                                            'var(--brand-400)',
-                                                                            'var(--brand-600)',
-                                                                            'var(--success-500)'
-                                                                        ][
-                                                                            index %
-                                                                                4
-                                                                        ]
+                                                                        DELIVERY_STATUS_COLORS[
+                                                                            item
+                                                                                .status
+                                                                        ] ??
+                                                                        'var(--slate-300)'
                                                                     }
                                                                 />
                                                             )

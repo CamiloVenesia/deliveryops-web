@@ -18,7 +18,7 @@ import {
 
 import {
     useAuth
-} from '../auth/AuthContext.jsx';
+} from '../auth/useAuth.js';
 
 import {
     userService
@@ -30,7 +30,7 @@ import {
 
 import {
     useToast
-} from '../components/ToastProvider.jsx';
+} from '../components/useToast.js';
 
 import {
     Button,

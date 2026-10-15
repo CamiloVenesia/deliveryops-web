@@ -1,7 +1,5 @@
 import {
-    createContext,
     useCallback,
-    useContext,
     useMemo,
     useState
 } from 'react';
@@ -13,8 +11,9 @@ import {
     X
 } from 'lucide-react';
 
-const ToastContext =
-    createContext(null);
+import {
+    ToastContext
+} from './toastContext.js';
 
 const icons = {
     success:
@@ -38,11 +37,17 @@ export function ToastProvider({
 
     const removeToast =
         useCallback(
-            (id) => {
+            (
+                id
+            ) => {
                 setToasts(
-                    (current) =>
+                    (
+                        current
+                    ) =>
                         current.filter(
-                            (toast) =>
+                            (
+                                toast
+                            ) =>
                                 toast.id !==
                                 id
                         )
@@ -56,15 +61,20 @@ export function ToastProvider({
             ({
                 type =
                     'success',
+
                 title,
+
                 message
             }) => {
                 const id =
                     crypto.randomUUID();
 
                 setToasts(
-                    (current) => [
+                    (
+                        current
+                    ) => [
                         ...current,
+
                         {
                             id,
                             type,
@@ -104,7 +114,9 @@ export function ToastProvider({
 
     return (
         <ToastContext.Provider
-            value={value}
+            value={
+                value
+            }
         >
             {children}
 
@@ -118,9 +130,8 @@ export function ToastProvider({
                     ) => {
                         const Icon =
                             icons[
-                                toast
-                                    .type
-                            ] ||
+                                toast.type
+                            ] ??
                             Info;
 
                         return (
@@ -177,19 +188,4 @@ export function ToastProvider({
             </div>
         </ToastContext.Provider>
     );
-}
-
-export function useToast() {
-    const context =
-        useContext(
-            ToastContext
-        );
-
-    if (!context) {
-        throw new Error(
-            'useToast debe utilizarse dentro de ToastProvider.'
-        );
-    }
-
-    return context;
 }

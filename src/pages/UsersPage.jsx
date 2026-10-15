@@ -14,7 +14,6 @@ import {
     FileUp,
     Plus,
     Trash2,
-    UserRound,
     UsersRound
 } from 'lucide-react';
 
@@ -28,11 +27,11 @@ import {
 
 import {
     useAuth
-} from '../auth/AuthContext.jsx';
+} from '../auth/useAuth.js';
 
 import {
     useToast
-} from '../components/ToastProvider.jsx';
+} from '../components/useToast.js';
 
 import {
     Button,
@@ -54,6 +53,8 @@ import {
     roleLabel,
     shortId
 } from '../utils/formatters.js';
+
+const EMPTY_ARRAY = [];
 
 export default function UsersPage() {
     const {
@@ -130,7 +131,7 @@ export default function UsersPage() {
     const users =
         usersQuery.data
             ?.items ??
-        [];
+        EMPTY_ARRAY;
 
     const visibleUsers =
         useMemo(
@@ -155,6 +156,9 @@ export default function UsersPage() {
                                 item.lastName,
                                 item.email,
                                 item.role,
+                                roleLabel(
+                                    item.role
+                                ),
                                 item._id
                             ]
                                 .filter(
@@ -198,12 +202,17 @@ export default function UsersPage() {
                     null
                 );
 
-                queryClient
-                    .invalidateQueries({
-                        queryKey: [
-                            'users'
-                        ]
-                    });
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        'users'
+                    ]
+                });
+
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        'dashboard'
+                    ]
+                });
 
                 pushToast({
                     title:
@@ -217,8 +226,10 @@ export default function UsersPage() {
                 pushToast({
                     type:
                         'error',
+
                     title:
                         'No se pudo eliminar',
+
                     message:
                         getApiErrorMessage(
                             error
@@ -263,8 +274,7 @@ export default function UsersPage() {
                                 event
                             ) =>
                                 setSearch(
-                                    event
-                                        .target
+                                    event.target
                                         .value
                                 )
                         }
@@ -281,8 +291,7 @@ export default function UsersPage() {
                                 event
                             ) =>
                                 setRoleFilter(
-                                    event
-                                        .target
+                                    event.target
                                         .value
                                 )
                         }
@@ -618,12 +627,16 @@ function CreateUserModal({
         useState({
             firstName:
                 '',
+
             lastName:
                 '',
+
             email:
                 '',
+
             password:
                 '',
+
             role:
                 'customer'
         });
@@ -636,12 +649,17 @@ function CreateUserModal({
                 ),
 
             onSuccess: () => {
-                queryClient
-                    .invalidateQueries({
-                        queryKey: [
-                            'users'
-                        ]
-                    });
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        'users'
+                    ]
+                });
+
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        'dashboard'
+                    ]
+                });
 
                 pushToast({
                     title:
@@ -651,12 +669,16 @@ function CreateUserModal({
                 setForm({
                     firstName:
                         '',
+
                     lastName:
                         '',
+
                     email:
                         '',
+
                     password:
                         '',
+
                     role:
                         'customer'
                 });
@@ -670,8 +692,10 @@ function CreateUserModal({
                 pushToast({
                     type:
                         'error',
+
                     title:
                         'No se pudo crear',
+
                     message:
                         getApiErrorMessage(
                             error
@@ -688,6 +712,7 @@ function CreateUserModal({
                 current
             ) => ({
                 ...current,
+
                 [field]:
                     value
             })
@@ -758,8 +783,7 @@ function CreateUserModal({
                                 ) =>
                                     update(
                                         'firstName',
-                                        event
-                                            .target
+                                        event.target
                                             .value
                                     )
                             }
@@ -783,8 +807,7 @@ function CreateUserModal({
                                 ) =>
                                     update(
                                         'lastName',
-                                        event
-                                            .target
+                                        event.target
                                             .value
                                     )
                             }
@@ -810,8 +833,7 @@ function CreateUserModal({
                             ) =>
                                 update(
                                     'email',
-                                    event
-                                        .target
+                                    event.target
                                         .value
                                 )
                         }
@@ -839,8 +861,7 @@ function CreateUserModal({
                             ) =>
                                 update(
                                     'password',
-                                    event
-                                        .target
+                                    event.target
                                         .value
                                 )
                         }
@@ -867,8 +888,7 @@ function CreateUserModal({
                             ) =>
                                 update(
                                     'role',
-                                    event
-                                        .target
+                                    event.target
                                         .value
                                 )
                         }
@@ -898,7 +918,9 @@ function UserDetailsModal({
     return (
         <Modal
             open={
-                Boolean(user)
+                Boolean(
+                    user
+                )
             }
             onClose={
                 onClose
@@ -1006,23 +1028,23 @@ function DocumentModal({
     const mutation =
         useMutation({
             mutationFn: () =>
-                userService
-                    .uploadDocument({
-                        userId:
-                            getEntityId(
-                                user
-                            ),
-                        documentType,
-                        file
-                    }),
+                userService.uploadDocument({
+                    userId:
+                        getEntityId(
+                            user
+                        ),
+
+                    documentType,
+
+                    file
+                }),
 
             onSuccess: () => {
-                queryClient
-                    .invalidateQueries({
-                        queryKey: [
-                            'users'
-                        ]
-                    });
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        'users'
+                    ]
+                });
 
                 pushToast({
                     title:
@@ -1042,8 +1064,10 @@ function DocumentModal({
                 pushToast({
                     type:
                         'error',
+
                     title:
                         'No se pudo cargar',
+
                     message:
                         getApiErrorMessage(
                             error
@@ -1054,7 +1078,9 @@ function DocumentModal({
     return (
         <Modal
             open={
-                Boolean(user)
+                Boolean(
+                    user
+                )
             }
             onClose={
                 onClose
@@ -1111,8 +1137,7 @@ function DocumentModal({
                                 event
                             ) =>
                                 setDocumentType(
-                                    event
-                                        .target
+                                    event.target
                                         .value
                                 )
                         }
@@ -1160,8 +1185,7 @@ function DocumentModal({
                                 event
                             ) =>
                                 setFile(
-                                    event
-                                        .target
+                                    event.target
                                         .files?.[0] ??
                                         null
                                 )
