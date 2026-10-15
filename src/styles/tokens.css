@@ -1,0 +1,107 @@
+:root {
+    --brand-25: #f6faff;
+    --brand-50: #eef6ff;
+    --brand-100: #dcecff;
+    --brand-200: #bfdcff;
+    --brand-300: #91c4ff;
+    --brand-400: #5ba5ff;
+    --brand-500: #3188f5;
+    --brand-600: #1769dc;
+    --brand-700: #1554b2;
+    --brand-800: #17488f;
+    --brand-900: #193f71;
+
+    --slate-0: #ffffff;
+    --slate-25: #fcfcfd;
+    --slate-50: #f8fafc;
+    --slate-100: #f1f5f9;
+    --slate-150: #eaf0f6;
+    --slate-200: #e2e8f0;
+    --slate-300: #cbd5e1;
+    --slate-400: #94a3b8;
+    --slate-500: #64748b;
+    --slate-600: #475569;
+    --slate-700: #334155;
+    --slate-800: #1e293b;
+    --slate-900: #0f172a;
+    --slate-950: #070f1c;
+
+    --success-50: #ecfdf3;
+    --success-100: #d1fadf;
+    --success-500: #16a34a;
+    --success-600: #15803d;
+    --success-700: #166534;
+
+    --warning-50: #fffaeb;
+    --warning-100: #fef0c7;
+    --warning-500: #e9a100;
+    --warning-700: #b77900;
+
+    --danger-50: #fff1f2;
+    --danger-100: #ffe4e6;
+    --danger-500: #e5484d;
+    --danger-600: #dc2626;
+    --danger-700: #be123c;
+
+    --violet-50: #f5f3ff;
+    --violet-500: #7c3aed;
+    --violet-700: #6d28d9;
+
+    --bg-app: #f5f7fa;
+    --bg-card: #ffffff;
+
+    --bg-sidebar: #091322;
+    --bg-sidebar-hover: #111f32;
+    --bg-sidebar-active: #142b49;
+
+    --text-primary: #162033;
+    --text-secondary: #667085;
+    --text-tertiary: #98a2b3;
+    --text-inverse: #f8fbff;
+
+    --border-subtle: #edf1f5;
+    --border-default: #dfe5ec;
+    --border-strong: #cbd5e1;
+
+    --shadow-xs:
+        0 1px 2px rgba(16, 24, 40, 0.035);
+
+    --shadow-sm:
+        0 1px 3px rgba(16, 24, 40, 0.055),
+        0 1px 2px rgba(16, 24, 40, 0.025);
+
+    --shadow-md:
+        0 10px 26px rgba(16, 24, 40, 0.075),
+        0 2px 6px rgba(16, 24, 40, 0.035);
+
+    --shadow-lg:
+        0 22px 54px rgba(9, 19, 34, 0.14);
+
+    --radius-xs: 6px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    --radius-2xl: 26px;
+    --radius-pill: 999px;
+
+    --sidebar-width: 264px;
+    --topbar-height: 72px;
+    --content-width: 1560px;
+
+    --ease-standard:
+        cubic-bezier(
+            0.2,
+            0,
+            0,
+            1
+        );
+
+    --transition-fast:
+        140ms
+        var(--ease-standard);
+
+    --transition-base:
+        220ms
+        var(--ease-standard);
+}
