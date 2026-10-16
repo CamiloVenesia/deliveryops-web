@@ -16,7 +16,8 @@ import {
     Package,
     Plus,
     ReceiptText,
-    Trash2
+    Trash2,
+    Truck
 } from 'lucide-react';
 
 import {
@@ -31,6 +32,8 @@ import {
 import {
     useAuth
 } from '../auth/useAuth.js';
+
+import CreateDeliveryModal from '../components/CreateDeliveryModal.jsx';
 
 import OperationTimeline from '../components/OperationTimeline.jsx';
 
@@ -220,6 +223,18 @@ export default function OrdersPage() {
         setDeleteOrder
     ] =
         useState(null);
+
+    const [
+        assignmentOpen,
+        setAssignmentOpen
+    ] =
+        useState(false);
+
+    const [
+        assignmentOrderId,
+        setAssignmentOrderId
+    ] =
+        useState('');
 
     const ordersQuery =
         useQuery({
@@ -520,6 +535,30 @@ export default function OrdersPage() {
                 })
         });
 
+    function openAssignment(
+        order
+    ) {
+        setAssignmentOrderId(
+            getEntityId(
+                order
+            )
+        );
+
+        setAssignmentOpen(
+            true
+        );
+    }
+
+    function closeAssignment() {
+        setAssignmentOpen(
+            false
+        );
+
+        setAssignmentOrderId(
+            ''
+        );
+    }
+
     return (
         <>
             <PageHeader
@@ -688,6 +727,16 @@ export default function OrdersPage() {
                                             choices.length >
                                             1;
 
+                                        const canAssign =
+                                            isAdmin &&
+                                            !order.delivery &&
+                                            [
+                                                'created',
+                                                'assigned'
+                                            ].includes(
+                                                order.status
+                                            );
+
                                         return (
                                             <tr
                                                 key={
@@ -845,6 +894,25 @@ export default function OrdersPage() {
                                                             />
                                                         </button>
 
+                                                        {canAssign && (
+                                                            <button
+                                                                type="button"
+                                                                className="icon-button"
+                                                                title="Asignar entrega"
+                                                                onClick={() =>
+                                                                    openAssignment(
+                                                                        order
+                                                                    )
+                                                                }
+                                                            >
+                                                                <Truck
+                                                                    size={
+                                                                        17
+                                                                    }
+                                                                />
+                                                            </button>
+                                                        )}
+
                                                         <button
                                                             type="button"
                                                             className="icon-button"
@@ -927,6 +995,22 @@ export default function OrdersPage() {
                 }
                 isAdmin={
                     isAdmin
+                }
+            />
+
+            <CreateDeliveryModal
+                key={
+                    assignmentOrderId ||
+                    'order-delivery-assignment'
+                }
+                open={
+                    assignmentOpen
+                }
+                initialOrderId={
+                    assignmentOrderId
+                }
+                onClose={
+                    closeAssignment
                 }
             />
 

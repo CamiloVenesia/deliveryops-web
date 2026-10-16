@@ -34,6 +34,8 @@ import {
     useAuth
 } from '../auth/useAuth.js';
 
+import CreateDeliveryModal from '../components/CreateDeliveryModal.jsx';
+
 import OperationTimeline from '../components/OperationTimeline.jsx';
 
 import {
@@ -590,7 +592,7 @@ export default function DeliveriesPage() {
                     role ===
                     'driver'
                         ? 'Gestioná las entregas visibles en tu cuenta y consultá su trazabilidad.'
-                        : 'Seguimiento operativo y trazabilidad de las entregas.'
+                        : 'Seguimiento operativo, asignación y trazabilidad de las entregas.'
                 }
             >
                 {isAdmin && (
@@ -604,7 +606,7 @@ export default function DeliveriesPage() {
                             )
                         }
                     >
-                        Nueva entrega
+                        Asignar entrega
                     </Button>
                 )}
             </PageHeader>
@@ -1008,6 +1010,7 @@ export default function DeliveriesPage() {
             </Card>
 
             <CreateDeliveryModal
+                key="manual-delivery-assignment"
                 open={
                     createOpen
                 }
@@ -1015,12 +1018,6 @@ export default function DeliveriesPage() {
                     setCreateOpen(
                         false
                     )
-                }
-                orders={
-                    orders
-                }
-                users={
-                    users
                 }
             />
 
@@ -1117,313 +1114,6 @@ export default function DeliveriesPage() {
                 </p>
             </Modal>
         </>
-    );
-}
-
-function CreateDeliveryModal({
-    open,
-    onClose,
-    orders,
-    users
-}) {
-    const {
-        pushToast
-    } =
-        useToast();
-
-    const queryClient =
-        useQueryClient();
-
-    const [
-        order,
-        setOrder
-    ] =
-        useState('');
-
-    const [
-        driver,
-        setDriver
-    ] =
-        useState('');
-
-    const [
-        priority,
-        setPriority
-    ] =
-        useState(
-            'normal'
-        );
-
-    const availableOrders =
-        orders.filter(
-            (
-                item
-            ) =>
-                item.status ===
-                'created' &&
-                !item.delivery
-        );
-
-    const drivers =
-        users.filter(
-            (
-                item
-            ) =>
-                item.role ===
-                'driver'
-        );
-
-    const mutation =
-        useMutation({
-            mutationFn: () =>
-                deliveryService.create({
-                    order,
-                    driver,
-                    priority
-                }),
-
-            onSuccess: () => {
-                queryClient.invalidateQueries({
-                    queryKey: [
-                        'deliveries'
-                    ]
-                });
-
-                queryClient.invalidateQueries({
-                    queryKey: [
-                        'orders'
-                    ]
-                });
-
-                queryClient.invalidateQueries({
-                    queryKey: [
-                        'dashboard'
-                    ]
-                });
-
-                pushToast({
-                    title:
-                        'Entrega creada',
-
-                    message:
-                        'El pedido fue asignado correctamente.'
-                });
-
-                setOrder(
-                    ''
-                );
-
-                setDriver(
-                    ''
-                );
-
-                setPriority(
-                    'normal'
-                );
-
-                onClose();
-            },
-
-            onError: (
-                error
-            ) =>
-                pushToast({
-                    type:
-                        'error',
-
-                    title:
-                        'No se pudo crear',
-
-                    message:
-                        getApiErrorMessage(
-                            error
-                        )
-                })
-        });
-
-    return (
-        <Modal
-            open={
-                open
-            }
-            onClose={
-                onClose
-            }
-            title="Nueva entrega"
-            description="Asigná un pedido disponible a un repartidor."
-            footer={
-                <>
-                    <Button
-                        variant="secondary"
-                        onClick={
-                            onClose
-                        }
-                    >
-                        Cancelar
-                    </Button>
-
-                    <Button
-                        disabled={
-                            !order ||
-                            !driver
-                        }
-                        loading={
-                            mutation.isPending
-                        }
-                        onClick={() =>
-                            mutation.mutate()
-                        }
-                    >
-                        Crear entrega
-                    </Button>
-                </>
-            }
-        >
-            <div className="form-stack">
-                <label className="form-field">
-                    <span className="form-label">
-                        Pedido
-                    </span>
-
-                    <select
-                        className="form-select"
-                        value={
-                            order
-                        }
-                        onChange={
-                            (
-                                event
-                            ) =>
-                                setOrder(
-                                    event
-                                        .target
-                                        .value
-                                )
-                        }
-                    >
-                        <option value="">
-                            Seleccionar pedido
-                        </option>
-
-                        {availableOrders.map(
-                            (
-                                item
-                            ) => (
-                                <option
-                                    key={
-                                        getEntityId(
-                                            item
-                                        )
-                                    }
-                                    value={
-                                        getEntityId(
-                                            item
-                                        )
-                                    }
-                                >
-                                    #
-                                    {shortId(
-                                        item
-                                    )}{' '}
-                                    —{' '}
-                                    {item.deliveryAddress ??
-                                        'Sin dirección'}
-                                </option>
-                            )
-                        )}
-                    </select>
-                </label>
-
-                <label className="form-field">
-                    <span className="form-label">
-                        Repartidor
-                    </span>
-
-                    <select
-                        className="form-select"
-                        value={
-                            driver
-                        }
-                        onChange={
-                            (
-                                event
-                            ) =>
-                                setDriver(
-                                    event
-                                        .target
-                                        .value
-                                )
-                        }
-                    >
-                        <option value="">
-                            Seleccionar repartidor
-                        </option>
-
-                        {drivers.map(
-                            (
-                                item
-                            ) => (
-                                <option
-                                    key={
-                                        getEntityId(
-                                            item
-                                        )
-                                    }
-                                    value={
-                                        getEntityId(
-                                            item
-                                        )
-                                    }
-                                >
-                                    {getPersonName(
-                                        item
-                                    )}{' '}
-                                    —{' '}
-                                    {
-                                        item.email
-                                    }
-                                </option>
-                            )
-                        )}
-                    </select>
-                </label>
-
-                <label className="form-field">
-                    <span className="form-label">
-                        Prioridad
-                    </span>
-
-                    <select
-                        className="form-select"
-                        value={
-                            priority
-                        }
-                        onChange={
-                            (
-                                event
-                            ) =>
-                                setPriority(
-                                    event
-                                        .target
-                                        .value
-                                )
-                        }
-                    >
-                        <option value="low">
-                            Baja
-                        </option>
-
-                        <option value="normal">
-                            Normal
-                        </option>
-
-                        <option value="high">
-                            Alta
-                        </option>
-                    </select>
-                </label>
-            </div>
-        </Modal>
     );
 }
 
