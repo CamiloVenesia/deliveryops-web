@@ -12,8 +12,10 @@ import {
 import {
     Eye,
     FileUp,
+    MapPin,
     Package,
     Plus,
+    ReceiptText,
     Trash2
 } from 'lucide-react';
 
@@ -29,6 +31,8 @@ import {
 import {
     useAuth
 } from '../auth/useAuth.js';
+
+import OperationTimeline from '../components/OperationTimeline.jsx';
 
 import {
     Button,
@@ -66,9 +70,100 @@ const statusOptions = [
     'cancelled'
 ];
 
+const ORDER_TRANSITIONS = {
+    created: [
+        'assigned',
+        'cancelled'
+    ],
+
+    assigned: [
+        'picked_up',
+        'in_transit',
+        'cancelled'
+    ],
+
+    picked_up: [
+        'in_transit',
+        'cancelled'
+    ],
+
+    in_transit: [
+        'delivered',
+        'cancelled'
+    ],
+
+    delivered: [],
+
+    cancelled: []
+};
+
+function getStatusChoices(
+    status
+) {
+    return [
+        status,
+        ...(
+            ORDER_TRANSITIONS[
+                status
+            ] ??
+            []
+        )
+    ].filter(
+        Boolean
+    );
+}
+
+function formatFileSize(
+    value
+) {
+    const bytes =
+        Number(
+            value
+        );
+
+    if (
+        !bytes ||
+        Number.isNaN(
+            bytes
+        )
+    ) {
+        return '';
+    }
+
+    if (
+        bytes <
+        1024
+    ) {
+        return `${bytes} B`;
+    }
+
+    if (
+        bytes <
+        1024 *
+            1024
+    ) {
+        return `${(
+            bytes /
+            1024
+        ).toFixed(
+            1
+        )} KB`;
+    }
+
+    return `${(
+        bytes /
+        1024 /
+        1024
+    ).toFixed(
+        1
+    )} MB`;
+}
+
 export default function OrdersPage() {
     const {
-        role
+        role,
+        user:
+            currentUser
     } =
         useAuth();
 
@@ -190,6 +285,44 @@ export default function OrdersPage() {
             ]
         );
 
+    function resolveCustomer(
+        order
+    ) {
+        if (
+            order?.customer &&
+            typeof order.customer ===
+                'object'
+        ) {
+            return order.customer;
+        }
+
+        const customerId =
+            getEntityId(
+                order?.customer
+            );
+
+        const mapped =
+            userMap.get(
+                customerId
+            );
+
+        if (mapped) {
+            return mapped;
+        }
+
+        if (
+            currentUser &&
+            getEntityId(
+                currentUser
+            ) ===
+                customerId
+        ) {
+            return currentUser;
+        }
+
+        return null;
+    }
+
     const visibleOrders =
         useMemo(
             () => {
@@ -215,6 +348,14 @@ export default function OrdersPage() {
                         const customer =
                             userMap.get(
                                 customerId
+                            ) ??
+                            (
+                                getEntityId(
+                                    currentUser
+                                ) ===
+                                customerId
+                                    ? currentUser
+                                    : null
                             );
 
                         const searchable =
@@ -227,9 +368,11 @@ export default function OrdersPage() {
                                     order.status
                                 ),
                                 customer?.email,
-                                getPersonName(
-                                    customer
-                                )
+                                customer
+                                    ? getPersonName(
+                                          customer
+                                      )
+                                    : null
                             ]
                                 .filter(
                                     Boolean
@@ -255,7 +398,8 @@ export default function OrdersPage() {
                 orders,
                 search,
                 statusFilter,
-                userMap
+                userMap,
+                currentUser
             ]
         );
 
@@ -279,6 +423,24 @@ export default function OrdersPage() {
 
                 queryClient.invalidateQueries({
                     queryKey: [
+                        'order'
+                    ]
+                });
+
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        'deliveries'
+                    ]
+                });
+
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        'delivery'
+                    ]
+                });
+
+                queryClient.invalidateQueries({
+                    queryKey: [
                         'dashboard'
                     ]
                 });
@@ -286,6 +448,7 @@ export default function OrdersPage() {
                 pushToast({
                     title:
                         'Estado actualizado',
+
                     message:
                         'El pedido fue actualizado correctamente.'
                 });
@@ -297,8 +460,10 @@ export default function OrdersPage() {
                 pushToast({
                     type:
                         'error',
+
                     title:
                         'No se pudo actualizar',
+
                     message:
                         getApiErrorMessage(
                             error
@@ -344,8 +509,10 @@ export default function OrdersPage() {
                 pushToast({
                     type:
                         'error',
+
                     title:
                         'No se pudo eliminar',
+
                     message:
                         getApiErrorMessage(
                             error
@@ -360,8 +527,8 @@ export default function OrdersPage() {
                 title="Pedidos"
                 description={
                     isAdmin
-                        ? 'Administrá los pedidos registrados en la plataforma.'
-                        : 'Consultá y gestioná tus pedidos.'
+                        ? 'Administrá los pedidos registrados y consultá su trazabilidad completa.'
+                        : 'Consultá tus pedidos y seguí cada etapa de la operación.'
                 }
             >
                 <Button
@@ -389,7 +556,8 @@ export default function OrdersPage() {
                                 event
                             ) =>
                                 setSearch(
-                                    event.target
+                                    event
+                                        .target
                                         .value
                                 )
                         }
@@ -406,7 +574,8 @@ export default function OrdersPage() {
                                 event
                             ) =>
                                 setStatusFilter(
-                                    event.target
+                                    event
+                                        .target
                                         .value
                                 )
                         }
@@ -494,14 +663,14 @@ export default function OrdersPage() {
                                                 order
                                             );
 
+                                        const customer =
+                                            resolveCustomer(
+                                                order
+                                            );
+
                                         const customerId =
                                             getEntityId(
                                                 order.customer
-                                            );
-
-                                        const customer =
-                                            userMap.get(
-                                                customerId
                                             );
 
                                         const itemCount =
@@ -509,6 +678,15 @@ export default function OrdersPage() {
                                                 .items
                                                 ?.length ??
                                             0;
+
+                                        const choices =
+                                            getStatusChoices(
+                                                order.status
+                                            );
+
+                                        const canTransition =
+                                            choices.length >
+                                            1;
 
                                         return (
                                             <tr
@@ -555,9 +733,9 @@ export default function OrdersPage() {
                                                                     ? getPersonName(
                                                                           customer
                                                                       )
-                                                                    : shortId(
+                                                                    : `#${shortId(
                                                                           customerId
-                                                                      )}
+                                                                      )}`}
                                                             </strong>
 
                                                             {customer?.email && (
@@ -585,12 +763,16 @@ export default function OrdersPage() {
                                                 </td>
 
                                                 <td>
-                                                    {isAdmin ? (
+                                                    {isAdmin &&
+                                                    canTransition ? (
                                                         <select
                                                             className="table-status-select"
                                                             value={
                                                                 order.status ??
                                                                 ''
+                                                            }
+                                                            disabled={
+                                                                updateStatusMutation.isPending
                                                             }
                                                             onChange={
                                                                 (
@@ -608,7 +790,7 @@ export default function OrdersPage() {
                                                                     )
                                                             }
                                                         >
-                                                            {statusOptions.map(
+                                                            {choices.map(
                                                                 (
                                                                     status
                                                                 ) => (
@@ -751,6 +933,13 @@ export default function OrdersPage() {
             <OrderDetailsModal
                 order={
                     detailOrder
+                }
+                customer={
+                    detailOrder
+                        ? resolveCustomer(
+                              detailOrder
+                          )
+                        : null
                 }
                 onClose={() =>
                     setDetailOrder(
@@ -921,6 +1110,7 @@ function CreateOrderModal({
                 });
 
                 reset();
+
                 onClose();
             },
 
@@ -1030,8 +1220,7 @@ function CreateOrderModal({
                         item
                     ) => ({
                         name:
-                            item.name
-                                .trim(),
+                            item.name.trim(),
 
                         quantity:
                             Number(
@@ -1374,11 +1563,39 @@ function CreateOrderModal({
 
 function OrderDetailsModal({
     order,
+    customer,
     onClose
 }) {
-    if (!order) {
-        return null;
-    }
+    const orderId =
+        getEntityId(
+            order
+        );
+
+    const detailQuery =
+        useQuery({
+            queryKey: [
+                'order',
+                orderId
+            ],
+
+            queryFn: () =>
+                orderService.getById(
+                    orderId
+                ),
+
+            enabled:
+                Boolean(
+                    orderId
+                )
+        });
+
+    const currentOrder =
+        detailQuery.data ??
+        order;
+
+    const receipt =
+        currentOrder
+            ?.receipt;
 
     return (
         <Modal
@@ -1391,86 +1608,277 @@ function OrderDetailsModal({
                 onClose
             }
             title={`Pedido #${shortId(
-                order
+                currentOrder
             )}`}
-            description="Detalle operativo del pedido."
+            description="Detalle completo y trazabilidad de la operación."
             size="lg"
         >
-            <div className="detail-grid">
-                <Detail
-                    label="Estado"
-                    value={
-                        <StatusBadge
-                            status={
-                                order.status
-                            }
-                        />
+            {detailQuery.isLoading &&
+            !currentOrder ? (
+                <div className="operation-detail-loading">
+                    <LoadingState />
+                </div>
+            ) : detailQuery.isError ? (
+                <EmptyState
+                    icon={
+                        Package
                     }
+                    title="No pudimos cargar el detalle"
+                    description={getApiErrorMessage(
+                        detailQuery.error
+                    )}
                 />
+            ) : currentOrder ? (
+                <>
+                    <div className="operation-detail-hero">
+                        <div className="operation-detail-hero__identity">
+                            <span className="operation-detail-hero__icon">
+                                <Package
+                                    size={
+                                        21
+                                    }
+                                />
+                            </span>
 
-                <Detail
-                    label="Total"
-                    value={
-                        formatMoney(
-                            order.total
-                        )
-                    }
-                />
-
-                <Detail
-                    label="Dirección"
-                    value={
-                        order.deliveryAddress ??
-                        '—'
-                    }
-                />
-
-                <Detail
-                    label="Creado"
-                    value={
-                        formatDateTime(
-                            order.createdAt
-                        )
-                    }
-                />
-            </div>
-
-            <div className="detail-section">
-                <h3>
-                    Items
-                </h3>
-
-                <div className="detail-items">
-                    {(order.items ??
-                        EMPTY_ARRAY).map(
-                        (
-                            item,
-                            index
-                        ) => (
-                            <div
-                                key={`${item.name ?? 'item'}-${index}`}
-                            >
-                                <span>
-                                    {item.name ??
-                                        `Item ${
-                                            index +
-                                            1
-                                        }`}
-                                </span>
-
+                            <div>
                                 <strong>
-                                    {item.quantity ??
-                                        1}{' '}
-                                    ×{' '}
-                                    {formatMoney(
-                                        item.price
+                                    Pedido #
+                                    {shortId(
+                                        currentOrder
                                     )}
                                 </strong>
+
+                                <span>
+                                    {getEntityId(
+                                        currentOrder
+                                    )}
+                                </span>
                             </div>
-                        )
-                    )}
-                </div>
-            </div>
+                        </div>
+
+                        <div className="operation-detail-hero__status">
+                            <StatusBadge
+                                status={
+                                    currentOrder.priority ??
+                                    'normal'
+                                }
+                            />
+
+                            <StatusBadge
+                                status={
+                                    currentOrder.status
+                                }
+                            />
+                        </div>
+                    </div>
+
+                    <div className="detail-grid">
+                        <Detail
+                            label="Cliente"
+                            value={
+                                customer
+                                    ? getPersonName(
+                                          customer
+                                      )
+                                    : `#${shortId(
+                                          currentOrder.customer
+                                      )}`
+                            }
+                        />
+
+                        <Detail
+                            label="Email"
+                            value={
+                                customer?.email ??
+                                '—'
+                            }
+                        />
+
+                        <Detail
+                            label="Total"
+                            value={formatMoney(
+                                currentOrder.total
+                            )}
+                        />
+
+                        <Detail
+                            label="Prioridad"
+                            value={
+                                <StatusBadge
+                                    status={
+                                        currentOrder.priority ??
+                                        'normal'
+                                    }
+                                />
+                            }
+                        />
+
+                        <Detail
+                            label="Entrega asociada"
+                            value={
+                                currentOrder.delivery
+                                    ? `#${shortId(
+                                          currentOrder.delivery
+                                      )}`
+                                    : 'Sin asignar'
+                            }
+                        />
+
+                        <Detail
+                            label="Creado"
+                            value={formatDateTime(
+                                currentOrder.createdAt
+                            )}
+                        />
+
+                        <Detail
+                            label="Última actualización"
+                            value={formatDateTime(
+                                currentOrder.updatedAt
+                            )}
+                        />
+                    </div>
+
+                    <div className="operation-detail-section">
+                        <div className="operation-detail-section__heading">
+                            <h3>
+                                Dirección de entrega
+                            </h3>
+
+                            <MapPin
+                                size={
+                                    15
+                                }
+                            />
+                        </div>
+
+                        <div className="operation-detail-receipt">
+                            <div className="operation-detail-receipt__info">
+                                <strong>
+                                    {currentOrder.deliveryAddress ??
+                                        'Sin dirección registrada'}
+                                </strong>
+
+                                <span>
+                                    Destino informado para este pedido
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="detail-section">
+                        <h3>
+                            Items
+                        </h3>
+
+                        <div className="detail-items">
+                            {(currentOrder.items ??
+                                EMPTY_ARRAY).map(
+                                (
+                                    item,
+                                    index
+                                ) => (
+                                    <div
+                                        key={`${item.name ?? 'item'}-${index}`}
+                                    >
+                                        <span>
+                                            {item.name ??
+                                                `Item ${
+                                                    index +
+                                                    1
+                                                }`}
+                                        </span>
+
+                                        <strong>
+                                            {item.quantity ??
+                                                1}{' '}
+                                            ×{' '}
+                                            {formatMoney(
+                                                item.price
+                                            )}
+                                        </strong>
+                                    </div>
+                                )
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="operation-detail-section">
+                        <div className="operation-detail-section__heading">
+                            <h3>
+                                Comprobante
+                            </h3>
+
+                            <ReceiptText
+                                size={
+                                    15
+                                }
+                            />
+                        </div>
+
+                        {receipt ? (
+                            <div className="operation-detail-receipt">
+                                <div className="operation-detail-receipt__info">
+                                    <strong>
+                                        {receipt.originalName ??
+                                            'Comprobante'}
+                                    </strong>
+
+                                    <span>
+                                        {[
+                                            receipt.mimetype,
+                                            formatFileSize(
+                                                receipt.size
+                                            ),
+                                            formatDateTime(
+                                                receipt.uploadedAt
+                                            )
+                                        ]
+                                            .filter(
+                                                (
+                                                    item
+                                                ) =>
+                                                    item &&
+                                                    item !==
+                                                        '—'
+                                            )
+                                            .join(
+                                                ' · '
+                                            )}
+                                    </span>
+                                </div>
+
+                                <StatusBadge
+                                    status="delivered"
+                                />
+                            </div>
+                        ) : (
+                            <div className="operation-detail-receipt">
+                                <div className="operation-detail-receipt__info">
+                                    <strong>
+                                        Sin comprobante
+                                    </strong>
+
+                                    <span>
+                                        Todavía no se cargó un archivo para este pedido.
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <OperationTimeline
+                        history={
+                            currentOrder.statusHistory ??
+                            EMPTY_ARRAY
+                        }
+                        currentStatus={
+                            currentOrder.status
+                        }
+                        title="Historial del pedido"
+                    />
+                </>
+            ) : null}
         </Modal>
     );
 }
@@ -1524,6 +1932,12 @@ function ReceiptModal({
                 queryClient.invalidateQueries({
                     queryKey: [
                         'orders'
+                    ]
+                });
+
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        'order'
                     ]
                 });
 

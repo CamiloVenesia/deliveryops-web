@@ -12,7 +12,10 @@ import {
 import {
     Eye,
     FileUp,
+    MapPin,
+    Package,
     Plus,
+    ReceiptText,
     Trash2,
     Truck
 } from 'lucide-react';
@@ -30,6 +33,8 @@ import {
 import {
     useAuth
 } from '../auth/useAuth.js';
+
+import OperationTimeline from '../components/OperationTimeline.jsx';
 
 import {
     useToast
@@ -61,8 +66,92 @@ const statusOptions = [
     'pending',
     'assigned',
     'in_transit',
-    'delivered'
+    'delivered',
+    'cancelled'
 ];
+
+const DELIVERY_TRANSITIONS = {
+    pending: [
+        'assigned',
+        'cancelled'
+    ],
+
+    assigned: [
+        'in_transit',
+        'cancelled'
+    ],
+
+    in_transit: [
+        'delivered',
+        'cancelled'
+    ],
+
+    delivered: [],
+
+    cancelled: []
+};
+
+function getStatusChoices(
+    status
+) {
+    return [
+        status,
+        ...(
+            DELIVERY_TRANSITIONS[
+                status
+            ] ??
+            []
+        )
+    ].filter(
+        Boolean
+    );
+}
+
+function formatFileSize(
+    value
+) {
+    const bytes =
+        Number(
+            value
+        );
+
+    if (
+        !bytes ||
+        Number.isNaN(
+            bytes
+        )
+    ) {
+        return '';
+    }
+
+    if (
+        bytes <
+        1024
+    ) {
+        return `${bytes} B`;
+    }
+
+    if (
+        bytes <
+        1024 *
+            1024
+    ) {
+        return `${(
+            bytes /
+            1024
+        ).toFixed(
+            1
+        )} KB`;
+    }
+
+    return `${(
+        bytes /
+        1024 /
+        1024
+    ).toFixed(
+        1
+    )} MB`;
+}
 
 export default function DeliveriesPage() {
     const {
@@ -242,6 +331,48 @@ export default function DeliveriesPage() {
             ]
         );
 
+    function resolveDriver(
+        delivery
+    ) {
+        if (
+            delivery?.driver &&
+            typeof delivery.driver ===
+                'object'
+        ) {
+            return delivery.driver;
+        }
+
+        return (
+            usersMap.get(
+                getEntityId(
+                    delivery?.driver
+                )
+            ) ??
+            null
+        );
+    }
+
+    function resolveOrder(
+        delivery
+    ) {
+        if (
+            delivery?.order &&
+            typeof delivery.order ===
+                'object'
+        ) {
+            return delivery.order;
+        }
+
+        return (
+            ordersMap.get(
+                getEntityId(
+                    delivery?.order
+                )
+            ) ??
+            null
+        );
+    }
+
     const visibleDeliveries =
         useMemo(
             () => {
@@ -269,6 +400,11 @@ export default function DeliveriesPage() {
                                 driverId
                             );
 
+                        const order =
+                            ordersMap.get(
+                                orderId
+                            );
+
                         const matchesStatus =
                             !statusFilter ||
                             delivery.status ===
@@ -278,10 +414,13 @@ export default function DeliveriesPage() {
                             [
                                 delivery._id,
                                 orderId,
+                                order?.deliveryAddress,
                                 driver?.email,
-                                getPersonName(
-                                    driver
-                                ),
+                                driver
+                                    ? getPersonName(
+                                          driver
+                                      )
+                                    : null,
                                 delivery.status,
                                 statusLabel(
                                     delivery.status
@@ -311,7 +450,8 @@ export default function DeliveriesPage() {
                 deliveries,
                 search,
                 statusFilter,
-                usersMap
+                usersMap,
+                ordersMap
             ]
         );
 
@@ -335,13 +475,34 @@ export default function DeliveriesPage() {
 
                 queryClient.invalidateQueries({
                     queryKey: [
+                        'delivery'
+                    ]
+                });
+
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        'orders'
+                    ]
+                });
+
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        'order'
+                    ]
+                });
+
+                queryClient.invalidateQueries({
+                    queryKey: [
                         'dashboard'
                     ]
                 });
 
                 pushToast({
                     title:
-                        'Entrega actualizada'
+                        'Entrega actualizada',
+
+                    message:
+                        'El estado operativo fue actualizado correctamente.'
                 });
             },
 
@@ -384,13 +545,22 @@ export default function DeliveriesPage() {
 
                 queryClient.invalidateQueries({
                     queryKey: [
+                        'orders'
+                    ]
+                });
+
+                queryClient.invalidateQueries({
+                    queryKey: [
                         'dashboard'
                     ]
                 });
 
                 pushToast({
                     title:
-                        'Entrega eliminada'
+                        'Entrega eliminada',
+
+                    message:
+                        'La asignación fue revertida correctamente.'
                 });
             },
 
@@ -419,8 +589,8 @@ export default function DeliveriesPage() {
                 description={
                     role ===
                     'driver'
-                        ? 'Gestioná las entregas asignadas a tu cuenta.'
-                        : 'Seguimiento operativo de las entregas.'
+                        ? 'Gestioná las entregas visibles en tu cuenta y consultá su trazabilidad.'
+                        : 'Seguimiento operativo y trazabilidad de las entregas.'
                 }
             >
                 {isAdmin && (
@@ -450,7 +620,8 @@ export default function DeliveriesPage() {
                                 event
                             ) =>
                                 setSearch(
-                                    event.target
+                                    event
+                                        .target
                                         .value
                                 )
                         }
@@ -467,7 +638,8 @@ export default function DeliveriesPage() {
                                 event
                             ) =>
                                 setStatusFilter(
-                                    event.target
+                                    event
+                                        .target
                                         .value
                                 )
                         }
@@ -566,13 +738,30 @@ export default function DeliveriesPage() {
                                             );
 
                                         const driver =
-                                            usersMap.get(
-                                                driverId
+                                            resolveDriver(
+                                                delivery
                                             );
 
                                         const order =
-                                            ordersMap.get(
-                                                orderId
+                                            resolveOrder(
+                                                delivery
+                                            );
+
+                                        const choices =
+                                            getStatusChoices(
+                                                delivery.status
+                                            );
+
+                                        const canTransition =
+                                            choices.length >
+                                            1;
+
+                                        const canDelete =
+                                            [
+                                                'pending',
+                                                'assigned'
+                                            ].includes(
+                                                delivery.status
                                             );
 
                                         return (
@@ -633,9 +822,9 @@ export default function DeliveriesPage() {
                                                                     ? getPersonName(
                                                                           driver
                                                                       )
-                                                                    : shortId(
+                                                                    : `#${shortId(
                                                                           driverId
-                                                                      )}
+                                                                      )}`}
                                                             </strong>
 
                                                             {driver?.email && (
@@ -659,12 +848,16 @@ export default function DeliveriesPage() {
                                                 </td>
 
                                                 <td>
-                                                    {canUpdate ? (
+                                                    {canUpdate &&
+                                                    canTransition ? (
                                                         <select
                                                             className="table-status-select"
                                                             value={
                                                                 delivery.status ??
                                                                 'assigned'
+                                                            }
+                                                            disabled={
+                                                                statusMutation.isPending
                                                             }
                                                             onChange={
                                                                 (
@@ -682,7 +875,7 @@ export default function DeliveriesPage() {
                                                                     )
                                                             }
                                                         >
-                                                            {statusOptions.map(
+                                                            {choices.map(
                                                                 (
                                                                     status
                                                                 ) => (
@@ -759,24 +952,25 @@ export default function DeliveriesPage() {
                                                             </button>
                                                         )}
 
-                                                        {isAdmin && (
-                                                            <button
-                                                                type="button"
-                                                                className="icon-button icon-button--danger"
-                                                                title="Eliminar"
-                                                                onClick={() =>
-                                                                    setDeleteDelivery(
-                                                                        delivery
-                                                                    )
-                                                                }
-                                                            >
-                                                                <Trash2
-                                                                    size={
-                                                                        17
+                                                        {isAdmin &&
+                                                            canDelete && (
+                                                                <button
+                                                                    type="button"
+                                                                    className="icon-button icon-button--danger"
+                                                                    title="Eliminar"
+                                                                    onClick={() =>
+                                                                        setDeleteDelivery(
+                                                                            delivery
+                                                                        )
                                                                     }
-                                                                />
-                                                            </button>
-                                                        )}
+                                                                >
+                                                                    <Trash2
+                                                                        size={
+                                                                            17
+                                                                        }
+                                                                    />
+                                                                </button>
+                                                            )}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -834,6 +1028,20 @@ export default function DeliveriesPage() {
                 delivery={
                     detailDelivery
                 }
+                order={
+                    detailDelivery
+                        ? resolveOrder(
+                              detailDelivery
+                          )
+                        : null
+                }
+                driver={
+                    detailDelivery
+                        ? resolveDriver(
+                              detailDelivery
+                          )
+                        : null
+                }
                 onClose={() =>
                     setDetailDelivery(
                         null
@@ -864,7 +1072,7 @@ export default function DeliveriesPage() {
                     )
                 }
                 title="Eliminar entrega"
-                description="Esta acción no se puede deshacer."
+                description="La asignación será revertida y el pedido volverá a estar disponible."
                 size="sm"
                 footer={
                     <>
@@ -952,7 +1160,8 @@ function CreateDeliveryModal({
                 item
             ) =>
                 item.status ===
-                'created'
+                'created' &&
+                !item.delivery
         );
 
     const drivers =
@@ -1086,7 +1295,8 @@ function CreateDeliveryModal({
                                 event
                             ) =>
                                 setOrder(
-                                    event.target
+                                    event
+                                        .target
                                         .value
                                 )
                         }
@@ -1139,7 +1349,8 @@ function CreateDeliveryModal({
                                 event
                             ) =>
                                 setDriver(
-                                    event.target
+                                    event
+                                        .target
                                         .value
                                 )
                         }
@@ -1192,7 +1403,8 @@ function CreateDeliveryModal({
                                 event
                             ) =>
                                 setPriority(
-                                    event.target
+                                    event
+                                        .target
                                         .value
                                 )
                         }
@@ -1217,11 +1429,54 @@ function CreateDeliveryModal({
 
 function DeliveryDetailsModal({
     delivery,
+    order,
+    driver,
     onClose
 }) {
-    if (!delivery) {
-        return null;
-    }
+    const deliveryId =
+        getEntityId(
+            delivery
+        );
+
+    const detailQuery =
+        useQuery({
+            queryKey: [
+                'delivery',
+                deliveryId
+            ],
+
+            queryFn: () =>
+                deliveryService.getById(
+                    deliveryId
+                ),
+
+            enabled:
+                Boolean(
+                    deliveryId
+                )
+        });
+
+    const currentDelivery =
+        detailQuery.data ??
+        delivery;
+
+    const currentOrder =
+        currentDelivery?.order &&
+        typeof currentDelivery.order ===
+            'object'
+            ? currentDelivery.order
+            : order;
+
+    const currentDriver =
+        currentDelivery?.driver &&
+        typeof currentDelivery.driver ===
+            'object'
+            ? currentDelivery.driver
+            : driver;
+
+    const receipt =
+        currentDelivery
+            ?.receipt;
 
     return (
         <Modal
@@ -1234,67 +1489,278 @@ function DeliveryDetailsModal({
                 onClose
             }
             title={`Entrega #${shortId(
-                delivery
+                currentDelivery
             )}`}
-            description="Información operativa de la entrega."
+            description="Detalle completo y trazabilidad de la entrega."
+            size="lg"
         >
-            <div className="detail-grid">
-                <Detail
-                    label="Estado"
-                    value={
-                        <StatusBadge
-                            status={
-                                delivery.status
+            {detailQuery.isLoading &&
+            !currentDelivery ? (
+                <div className="operation-detail-loading">
+                    <LoadingState />
+                </div>
+            ) : detailQuery.isError ? (
+                <EmptyState
+                    icon={
+                        Truck
+                    }
+                    title="No pudimos cargar el detalle"
+                    description={getApiErrorMessage(
+                        detailQuery.error
+                    )}
+                />
+            ) : currentDelivery ? (
+                <>
+                    <div className="operation-detail-hero">
+                        <div className="operation-detail-hero__identity">
+                            <span className="operation-detail-hero__icon">
+                                <Truck
+                                    size={
+                                        21
+                                    }
+                                />
+                            </span>
+
+                            <div>
+                                <strong>
+                                    Entrega #
+                                    {shortId(
+                                        currentDelivery
+                                    )}
+                                </strong>
+
+                                <span>
+                                    {getEntityId(
+                                        currentDelivery
+                                    )}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="operation-detail-hero__status">
+                            <StatusBadge
+                                status={
+                                    currentDelivery.priority ??
+                                    'normal'
+                                }
+                            />
+
+                            <StatusBadge
+                                status={
+                                    currentDelivery.status
+                                }
+                            />
+                        </div>
+                    </div>
+
+                    <div className="detail-grid">
+                        <Detail
+                            label="Pedido"
+                            value={`#${shortId(
+                                currentDelivery.order
+                            )}`}
+                        />
+
+                        <Detail
+                            label="Repartidor"
+                            value={
+                                currentDriver
+                                    ? getPersonName(
+                                          currentDriver
+                                      )
+                                    : `#${shortId(
+                                          currentDelivery.driver
+                                      )}`
                             }
                         />
-                    }
-                />
 
-                <Detail
-                    label="Prioridad"
-                    value={
-                        <StatusBadge
-                            status={
-                                delivery.priority ??
-                                'normal'
+                        <Detail
+                            label="Email repartidor"
+                            value={
+                                currentDriver?.email ??
+                                '—'
                             }
                         />
-                    }
-                />
 
-                <Detail
-                    label="Pedido"
-                    value={`#${shortId(
-                        delivery.order
-                    )}`}
-                />
+                        <Detail
+                            label="Prioridad"
+                            value={
+                                <StatusBadge
+                                    status={
+                                        currentDelivery.priority ??
+                                        'normal'
+                                    }
+                                />
+                            }
+                        />
 
-                <Detail
-                    label="Repartidor"
-                    value={`#${shortId(
-                        delivery.driver
-                    )}`}
-                />
+                        <Detail
+                            label="Asignada"
+                            value={formatDateTime(
+                                currentDelivery.assignedAt ??
+                                    currentDelivery.createdAt
+                            )}
+                        />
 
-                <Detail
-                    label="Asignada"
-                    value={
-                        formatDateTime(
-                            delivery.assignedAt ??
-                                delivery.createdAt
-                        )
-                    }
-                />
+                        <Detail
+                            label="Entregada"
+                            value={formatDateTime(
+                                currentDelivery.deliveredAt
+                            )}
+                        />
 
-                <Detail
-                    label="Entregada"
-                    value={
-                        formatDateTime(
-                            delivery.deliveredAt
-                        )
-                    }
-                />
-            </div>
+                        <Detail
+                            label="Última actualización"
+                            value={formatDateTime(
+                                currentDelivery.updatedAt
+                            )}
+                        />
+                    </div>
+
+                    <div className="operation-detail-section">
+                        <div className="operation-detail-section__heading">
+                            <h3>
+                                Pedido asociado
+                            </h3>
+
+                            <Package
+                                size={
+                                    15
+                                }
+                            />
+                        </div>
+
+                        <div className="operation-detail-receipt">
+                            <div className="operation-detail-receipt__info">
+                                <strong>
+                                    Pedido #
+                                    {shortId(
+                                        currentDelivery.order
+                                    )}
+                                </strong>
+
+                                <span>
+                                    {currentOrder?.deliveryAddress ??
+                                        'Dirección no disponible para este rol'}
+                                </span>
+                            </div>
+
+                            {currentOrder?.status && (
+                                <StatusBadge
+                                    status={
+                                        currentOrder.status
+                                    }
+                                />
+                            )}
+                        </div>
+                    </div>
+
+                    {currentOrder?.deliveryAddress && (
+                        <div className="operation-detail-section">
+                            <div className="operation-detail-section__heading">
+                                <h3>
+                                    Destino
+                                </h3>
+
+                                <MapPin
+                                    size={
+                                        15
+                                    }
+                                />
+                            </div>
+
+                            <div className="operation-detail-receipt">
+                                <div className="operation-detail-receipt__info">
+                                    <strong>
+                                        {
+                                            currentOrder.deliveryAddress
+                                        }
+                                    </strong>
+
+                                    <span>
+                                        Dirección registrada en el pedido
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="operation-detail-section">
+                        <div className="operation-detail-section__heading">
+                            <h3>
+                                Comprobante
+                            </h3>
+
+                            <ReceiptText
+                                size={
+                                    15
+                                }
+                            />
+                        </div>
+
+                        {receipt ? (
+                            <div className="operation-detail-receipt">
+                                <div className="operation-detail-receipt__info">
+                                    <strong>
+                                        {receipt.originalName ??
+                                            'Comprobante de entrega'}
+                                    </strong>
+
+                                    <span>
+                                        {[
+                                            receipt.mimetype,
+                                            formatFileSize(
+                                                receipt.size
+                                            ),
+                                            formatDateTime(
+                                                receipt.uploadedAt
+                                            )
+                                        ]
+                                            .filter(
+                                                (
+                                                    item
+                                                ) =>
+                                                    item &&
+                                                    item !==
+                                                        '—'
+                                            )
+                                            .join(
+                                                ' · '
+                                            )}
+                                    </span>
+                                </div>
+
+                                <StatusBadge
+                                    status="delivered"
+                                />
+                            </div>
+                        ) : (
+                            <div className="operation-detail-receipt">
+                                <div className="operation-detail-receipt__info">
+                                    <strong>
+                                        Sin comprobante
+                                    </strong>
+
+                                    <span>
+                                        Todavía no se cargó un comprobante para esta entrega.
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <OperationTimeline
+                        history={
+                            currentDelivery.statusHistory ??
+                            EMPTY_ARRAY
+                        }
+                        currentStatus={
+                            currentDelivery.status
+                        }
+                        title="Historial de la entrega"
+                    />
+                </>
+            ) : null}
         </Modal>
     );
 }
@@ -1331,6 +1797,12 @@ function DeliveryReceiptModal({
                 queryClient.invalidateQueries({
                     queryKey: [
                         'deliveries'
+                    ]
+                });
+
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        'delivery'
                     ]
                 });
 
