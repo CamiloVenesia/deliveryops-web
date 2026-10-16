@@ -1373,7 +1373,7 @@ function CreateOrderModal({
                 {isAdmin && (
                     <label className="form-field">
                         <span className="form-label">
-                            Cliente
+                            Cliente / destinatario
                         </span>
 
                         <select
@@ -1394,7 +1394,7 @@ function CreateOrderModal({
                             }
                         >
                             <option value="">
-                                Seleccionar cliente
+                                Seleccionar cliente / destinatario
                             </option>
 
                             {customers.map(
@@ -1758,7 +1758,7 @@ function OrderDetailsModal({
 
                     <div className="detail-grid">
                         <Detail
-                            label="Cliente"
+                            label="Cliente / destinatario"
                             value={
                                 customer
                                     ? getPersonName(
