@@ -1,0 +1,358 @@
+
+.depots-page {
+    min-width: 0;
+}
+
+.depots-overview {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.depot-summary {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    color: var(--brand-600);
+}
+
+.depot-summary > svg {
+    padding: 10px;
+    width: 46px;
+    height: 46px;
+    border-radius: 13px;
+    background: var(--brand-50);
+}
+
+.depot-summary > div {
+    display: grid;
+    gap: 4px;
+}
+
+.depot-summary span {
+    font-size: 12px;
+    color: var(--slate-500);
+}
+
+.depot-summary strong {
+    font-size: 25px;
+    color: var(--slate-900);
+    letter-spacing: -0.04em;
+}
+
+.depot-list-card {
+    padding: 0;
+    overflow: hidden;
+}
+
+.depots-toolbar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 20px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.depots-search {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex: 1;
+    min-width: 190px;
+    max-width: 430px;
+    border: 1px solid var(--border-default);
+    border-radius: 10px;
+    background: white;
+    color: var(--slate-400);
+    padding: 0 12px;
+}
+
+.depots-search input {
+    width: 100%;
+    height: 40px;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--slate-800);
+    font-size: 13px;
+}
+
+.depots-toolbar select {
+    padding: 11px 12px;
+    min-width: 150px;
+    border: 1px solid var(--border-default);
+    border-radius: 10px;
+    background: var(--slate-0);
+    color: var(--slate-700);
+    font-size: 12px;
+}
+
+.depots-refresh {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 41px;
+    height: 41px;
+    border: 1px solid var(--border-default);
+    border-radius: 10px;
+    background: var(--slate-0);
+    color: var(--slate-600);
+}
+
+.depots-refresh:hover {
+    background: var(--slate-50);
+}
+
+.depots-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.depots-table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 760px;
+    text-align: left;
+}
+
+.depots-table th {
+    padding: 14px 20px;
+    background: var(--slate-50);
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--slate-500);
+    font-size: 11px;
+    font-weight: 650;
+    white-space: nowrap;
+}
+
+.depots-table td {
+    padding: 17px 20px;
+    border-bottom: 1px solid var(--border-subtle);
+    vertical-align: middle;
+    font-size: 12px;
+    color: var(--slate-700);
+}
+
+.depots-table tbody tr:hover {
+    background: var(--slate-25);
+}
+
+.depot-name {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.depot-name__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 39px;
+    height: 39px;
+    border-radius: 11px;
+    color: var(--brand-700);
+    background: var(--brand-50);
+}
+
+.depot-name > div,
+.depot-contact {
+    display: grid;
+    gap: 5px;
+}
+
+.depot-name strong,
+.depot-contact strong {
+    color: var(--slate-900);
+    font-size: 12px;
+}
+
+.depot-name small,
+.depot-contact small {
+    color: var(--slate-500);
+    font-size: 11px;
+}
+
+.depot-address {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    max-width: 260px;
+    line-height: 1.5;
+}
+
+.depot-address svg {
+    flex-shrink: 0;
+    color: var(--slate-400);
+}
+
+.depot-state {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 650;
+}
+
+.depot-state i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.depot-state--active {
+    color: var(--success-700);
+    background: var(--success-50);
+}
+
+.depot-state--inactive {
+    color: var(--slate-600);
+    background: var(--slate-100);
+}
+
+.depot-actions {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.depot-actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 33px;
+    height: 33px;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--slate-500);
+}
+
+.depot-actions button:hover:not(:disabled) {
+    background: var(--brand-50);
+    color: var(--brand-700);
+}
+
+.depot-actions button.depot-actions__danger:hover {
+    background: var(--danger-50);
+    color: var(--danger-600);
+}
+
+.depot-actions button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.depot-form {
+    display: grid;
+    gap: 24px;
+}
+
+.depot-form__section {
+    display: grid;
+    gap: 14px;
+}
+
+.depot-form__section h3 {
+    margin: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--slate-900);
+    font-size: 13px;
+}
+
+.depot-form__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.depot-field {
+    display: grid;
+    gap: 7px;
+    min-width: 0;
+}
+
+.depot-field span {
+    font-size: 12px;
+    color: var(--slate-600);
+    font-weight: 600;
+}
+
+.depot-field b {
+    color: var(--danger-600);
+}
+
+.depot-field input {
+    display: block;
+    width: 100%;
+    height: 42px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-default);
+    border-radius: 9px;
+    background: white;
+    color: var(--slate-900);
+    outline: none;
+    font-size: 13px;
+}
+
+.depot-field input:focus {
+    border-color: var(--brand-500);
+    box-shadow: 0 0 0 3px var(--brand-50);
+}
+
+.depot-field input:disabled {
+    background: var(--slate-50);
+    cursor: not-allowed;
+}
+
+.depot-form__switch {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--slate-700);
+}
+
+.depot-form__switch input {
+    accent-color: var(--brand-600);
+    width: 16px;
+    height: 16px;
+}
+
+.depot-delete-note {
+    margin: 0;
+    color: var(--slate-700);
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+@media (max-width: 650px) {
+    .depots-overview {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .depots-toolbar {
+        padding: 14px;
+    }
+
+    .depots-search {
+        max-width: none;
+        flex-basis: 100%;
+    }
+
+    .depots-toolbar select {
+        flex: 1;
+    }
+
+    .depot-form__grid {
+        grid-template-columns: 1fr;
+    }
+}
