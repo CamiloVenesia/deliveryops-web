@@ -36,6 +36,15 @@ import {
 import CreateDeliveryModal from '../components/CreateDeliveryModal.jsx';
 
 import OperationTimeline from '../components/OperationTimeline.jsx';
+import ShipmentCode from '../components/ShipmentCode.jsx';
+import OrderRecipientFields from '../components/OrderRecipientFields.jsx';
+import {
+    INITIAL_RECIPIENT,
+    buildRecipientLogistics
+} from '../utils/orderRecipient.js';
+import {
+    OrderLogisticsSummary
+} from '../components/ShipmentLogisticsSummary.jsx';
 
 import {
     Button,
@@ -754,12 +763,7 @@ export default function OrdersPage() {
                                                         </span>
 
                                                         <div>
-                                                            <strong>
-                                                                #
-                                                                {shortId(
-                                                                    id
-                                                                )}
-                                                            </strong>
+                                                            <ShipmentCode record={order} label="Pedido" />
 
                                                             <span>
                                                                 {
@@ -799,9 +803,13 @@ export default function OrdersPage() {
                                                 )}
 
                                                 <td className="table-address">
-                                                    {order.deliveryAddress ??
-                                                        '—'}
-                                                </td>
+    <div className="shipment-destination">
+        <strong>{order.deliveryAddress ?? '—'}</strong>
+        {order.recipient?.fullName && (
+            <span>Recibe: {order.recipient.fullName}</span>
+        )}
+    </div>
+</td>
 
                                                 <td>
                                                     <strong>
@@ -1128,6 +1136,9 @@ function CreateOrderModal({
         setDeliveryAddress
     ] =
         useState('');
+const [recipient, setRecipient] = useState({
+    ...INITIAL_RECIPIENT
+});
 
     const [
         priority,
@@ -1216,6 +1227,7 @@ function CreateOrderModal({
         });
 
     function reset() {
+    setRecipient({ ...INITIAL_RECIPIENT });
         setCustomer(
             ''
         );
@@ -1293,6 +1305,7 @@ function CreateOrderModal({
         event.preventDefault();
 
         const payload = {
+    ...buildRecipientLogistics(recipient),
             deliveryAddress:
                 deliveryAddress.trim(),
 
@@ -1373,7 +1386,7 @@ function CreateOrderModal({
                 {isAdmin && (
                     <label className="form-field">
                         <span className="form-label">
-                            Cliente / destinatario
+                            Cliente que solicita el envío
                         </span>
 
                         <select
@@ -1394,7 +1407,7 @@ function CreateOrderModal({
                             }
                         >
                             <option value="">
-                                Seleccionar cliente / destinatario
+                                Seleccionar cliente
                             </option>
 
                             {customers.map(
@@ -1427,7 +1440,11 @@ function CreateOrderModal({
                     </label>
                 )}
 
-                <div className="form-grid form-grid--2">
+                <OrderRecipientFields
+    value={recipient}
+    onChange={setRecipient}
+/>
+<div className="form-grid form-grid--2">
                     <label className="form-field">
                         <span className="form-label">
                             Dirección de entrega
@@ -1691,9 +1708,7 @@ function OrderDetailsModal({
             onClose={
                 onClose
             }
-            title={`Pedido #${shortId(
-                currentOrder
-            )}`}
+            title={currentOrder?.trackingCode ? `Pedido ${currentOrder.trackingCode}` : `Pedido #${shortId(currentOrder)}`}
             description="Detalle completo y trazabilidad de la operación."
             size="lg"
         >
@@ -1725,12 +1740,7 @@ function OrderDetailsModal({
                             </span>
 
                             <div>
-                                <strong>
-                                    Pedido #
-                                    {shortId(
-                                        currentOrder
-                                    )}
-                                </strong>
+                                <strong>Pedido {currentOrder.trackingCode || `#${shortId(currentOrder)}`}</strong>
 
                                 <span>
                                     {getEntityId(
@@ -1756,9 +1766,10 @@ function OrderDetailsModal({
                         </div>
                     </div>
 
-                    <div className="detail-grid">
+                    <OrderLogisticsSummary order={currentOrder} />
+<div className="detail-grid">
                         <Detail
-                            label="Cliente / destinatario"
+                            label="Cliente (titular)"
                             value={
                                 customer
                                     ? getPersonName(
@@ -1933,7 +1944,7 @@ function OrderDetailsModal({
                                 </div>
 
                                 <StatusBadge
-                                    status="delivered"
+                                    status={currentOrder.status}
                                 />
                             </div>
                         ) : (

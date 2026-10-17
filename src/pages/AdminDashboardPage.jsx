@@ -72,12 +72,17 @@ function shortDay(value) {
 }
 
 function formatPercentage(value) {
-    return value == null ? '—' : `${formatNumber(value)}%`;
+    return value == null
+        ? '—'
+        : `${formatNumber(value)}%`;
 }
 
 function financeRows(finances) {
-    const shipping = finances?.shippingRevenueByCurrency ?? {};
-    const costs = finances?.deliveryCostsByCurrency ?? {};
+    const shipping =
+        finances?.shippingRevenueByCurrency ?? {};
+
+    const costs =
+        finances?.deliveryCostsByCurrency ?? {};
 
     const currencies = [
         ...new Set([
@@ -108,6 +113,7 @@ function SectionTitle({ title, description, action }) {
 
 export default function AdminDashboardPage() {
     const [days, setDays] = useState(14);
+    const [refreshNotice, setRefreshNotice] = useState('');
 
     const query = useQuery({
         queryKey: ['analytics', 'dashboard', days],
@@ -115,8 +121,32 @@ export default function AdminDashboardPage() {
         refetchInterval: 60_000
     });
 
+    async function refreshDashboard() {
+        setRefreshNotice('');
+
+        const result = await query.refetch();
+
+        setRefreshNotice(
+            result.error
+                ? `Error al actualizar: ${getApiErrorMessage(result.error)}`
+                : 'Consulta completada. Las cifras cambian cuando se actualizan los estados de pedidos y entregas.'
+        );
+    }
+
+    const lastUpdated = query.dataUpdatedAt
+        ? new Date(query.dataUpdatedAt).toLocaleTimeString(
+            'es-AR',
+            {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            }
+        )
+        : null;
+
     const data = query.data;
     const overview = data?.overview;
+
     const daily = data?.activity?.daily ?? [];
     const recentOrders = data?.activity?.recentOrders ?? [];
     const finance = financeRows(data?.finances);
@@ -151,7 +181,7 @@ export default function AdminDashboardPage() {
                 <button
                     type="button"
                     className="analytics-refresh"
-                    onClick={() => query.refetch()}
+                    onClick={refreshDashboard}
                     disabled={query.isFetching}
                     title="Actualizar estadísticas"
                 >
@@ -159,21 +189,34 @@ export default function AdminDashboardPage() {
                         size={16}
                         className={query.isFetching ? 'spin' : ''}
                     />
-                    Actualizar
+
+                    {query.isFetching
+                        ? 'Actualizando...'
+                        : 'Actualizar'}
                 </button>
             </PageHeader>
 
             <div className="analytics-toolbar">
                 <div className="analytics-live">
                     <span className="analytics-live__dot" />
+
                     Datos reales de la API
 
-                    {data?.generatedAt && (
+                    {lastUpdated && (
                         <span className="analytics-updated">
-                            · Actualizado {relativeDate(data.generatedAt)}
+                            · Última consulta: {lastUpdated}
                         </span>
                     )}
                 </div>
+
+                {refreshNotice && (
+                    <span
+                        className="analytics-updated"
+                        role="status"
+                    >
+                        {refreshNotice}
+                    </span>
+                )}
 
                 <div
                     className="analytics-periods"
@@ -184,7 +227,11 @@ export default function AdminDashboardPage() {
                         <button
                             key={period}
                             type="button"
-                            className={days === period ? 'is-selected' : ''}
+                            className={
+                                days === period
+                                    ? 'is-selected'
+                                    : ''
+                            }
                             aria-pressed={days === period}
                             onClick={() => setDays(period)}
                         >
@@ -257,7 +304,9 @@ export default function AdminDashboardPage() {
                             icon={Route}
                             tone="violet"
                             label="Tasa de entrega"
-                            value={formatPercentage(overview.deliveryRate)}
+                            value={formatPercentage(
+                                overview.deliveryRate
+                            )}
                             description="Sobre pedidos finalizados"
                         />
 
@@ -296,7 +345,9 @@ export default function AdminDashboardPage() {
                         <Card className="analytics-panel analytics-panel--main">
                             <SectionTitle
                                 title="Actividad de la operación"
-                                description={`Pedidos creados y entregas completadas · últimos ${days} días`}
+                                description={
+                                    `Pedidos creados y entregas completadas · últimos ${days} días`
+                                }
                             />
 
                             {daily.length ? (
@@ -327,6 +378,7 @@ export default function AdminDashboardPage() {
                                                         stopColor="#3188f5"
                                                         stopOpacity={0.2}
                                                     />
+
                                                     <stop
                                                         offset="95%"
                                                         stopColor="#3188f5"
@@ -404,6 +456,7 @@ export default function AdminDashboardPage() {
                                     <i className="analytics-dot analytics-dot--blue" />
                                     Pedidos creados
                                 </span>
+
                                 <span>
                                     <i className="analytics-dot analytics-dot--green" />
                                     Entregas completadas
@@ -414,9 +467,11 @@ export default function AdminDashboardPage() {
                         <Card className="analytics-panel">
                             <SectionTitle
                                 title="Estado de pedidos"
-                                description={`${formatNumber(
-                                    overview.ordersTotal
-                                )} pedidos en total`}
+                                description={
+                                    `${formatNumber(
+                                        overview.ordersTotal
+                                    )} pedidos en total`
+                                }
                             />
 
                             {statusData.length ? (
@@ -443,14 +498,18 @@ export default function AdminDashboardPage() {
                                                         />
                                                     ))}
                                                 </Pie>
+
                                                 <Tooltip />
                                             </PieChart>
                                         </ResponsiveContainer>
 
                                         <div className="analytics-donut__number">
                                             <strong>
-                                                {formatNumber(overview.ordersTotal)}
+                                                {formatNumber(
+                                                    overview.ordersTotal
+                                                )}
                                             </strong>
+
                                             <span>Pedidos</span>
                                         </div>
                                     </div>
@@ -461,11 +520,14 @@ export default function AdminDashboardPage() {
                                                 <span>
                                                     <i
                                                         style={{
-                                                            background: COLORS[item.key]
+                                                            background:
+                                                                COLORS[item.key]
                                                         }}
                                                     />
+
                                                     {item.name}
                                                 </span>
+
                                                 <strong>
                                                     {formatNumber(item.value)}
                                                 </strong>
@@ -500,17 +562,23 @@ export default function AdminDashboardPage() {
 
                                         <div>
                                             <span>Cargos de envío</span>
-                                            <strong>{formatMoney(row.shipping)}</strong>
+
+                                            <strong>
+                                                {formatMoney(row.shipping)}
+                                            </strong>
                                         </div>
 
                                         <div>
                                             <span>Costos de reparto</span>
-                                            <strong>{formatMoney(row.cost)}</strong>
+
+                                            <strong>
+                                                {formatMoney(row.cost)}
+                                            </strong>
                                         </div>
 
                                         <small>
-                                            Importes registrados; no representan
-                                            beneficio neto.
+                                            Importes registrados; no
+                                            representan beneficio neto.
                                         </small>
                                     </div>
                                 ))
@@ -528,7 +596,10 @@ export default function AdminDashboardPage() {
                                 title="Pedidos recientes"
                                 description="Últimos movimientos de pedidos registrados"
                                 action={
-                                    <Link className="analytics-link" to="/orders">
+                                    <Link
+                                        className="analytics-link"
+                                        to="/orders"
+                                    >
                                         Ver pedidos
                                         <ArrowRight size={15} />
                                     </Link>
@@ -556,6 +627,7 @@ export default function AdminDashboardPage() {
                                                                 shortId(order.id)}
                                                         </strong>
                                                     </td>
+
                                                     <td>
                                                         <StatusBadge
                                                             status={
@@ -564,11 +636,13 @@ export default function AdminDashboardPage() {
                                                             }
                                                         />
                                                     </td>
+
                                                     <td>
                                                         <StatusBadge
                                                             status={order.status}
                                                         />
                                                     </td>
+
                                                     <td>
                                                         {relativeDate(
                                                             order.updatedAt ||
@@ -591,9 +665,9 @@ export default function AdminDashboardPage() {
                     </div>
 
                     <p className="analytics-footnote">
-                        Indicadores globales acumulados, salvo la serie diaria
-                        y los pedidos creados hoy. Los períodos modifican
-                        solamente el gráfico.
+                        Indicadores globales acumulados, salvo la serie
+                        diaria y los pedidos creados hoy. Los períodos
+                        modifican solamente el gráfico.
                     </p>
                 </>
             )}

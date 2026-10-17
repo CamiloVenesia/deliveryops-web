@@ -1,28 +1,27 @@
 
 import { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
     ClipboardCheck,
     Clock3,
     ExternalLink,
     FileCheck2,
-    LocateFixed,
     MapPin,
     Navigation,
     Package,
     RefreshCw,
     Route,
-    Truck,
-    UploadCloud
+    Truck
 } from 'lucide-react';
 
 import { deliveryService } from '../api/services.js';
 import { deliveryLogisticsService } from '../api/logistics.service.js';
 import { getApiErrorMessage } from '../api/normalizers.js';
 import { useAuth } from '../auth/useAuth.js';
-import { useToast } from '../components/useToast.js';
 import OperationTimeline from '../components/OperationTimeline.jsx';
+import TrackingActions from '../components/TrackingActions.jsx';
+import DeliveryRouteMap from '../components/DeliveryRouteMap.jsx';
 import {
     Button,
     Card,
@@ -98,442 +97,6 @@ function SectionHeader({ icon: Icon, title, subtitle }) {
                 <h2>{title}</h2>
                 {subtitle && <p>{subtitle}</p>}
             </div>
-        </div>
-    );
-}
-
-function TrackingOperations({ id, status, proof, refresh }) {
-    const { pushToast } = useToast();
-
-    const [gps, setGps] = useState({
-        latitude: '',
-        longitude: '',
-        source: 'manual'
-    });
-    const [locating, setLocating] = useState(false);
-    const [attempt, setAttempt] = useState({
-        outcome: 'recipient_absent',
-        notes: ''
-    });
-    const [proofForm, setProofForm] = useState({
-        receivedBy: '',
-        relationship: '',
-        notes: '',
-        signatureUrl: '',
-        photoUrl: ''
-    });
-    const [receiptFile, setReceiptFile] = useState(null);
-
-    function success(message) {
-        pushToast({ title: message });
-        refresh();
-    }
-
-    function failure(error) {
-        pushToast({
-            type: 'error',
-            title: 'No se pudo completar la operación',
-            message: getApiErrorMessage(error)
-        });
-    }
-
-    const gpsMutation = useMutation({
-        mutationFn: payload =>
-            deliveryLogisticsService.recordLocation(id, payload),
-        onSuccess: () => success('Ubicación GPS registrada'),
-        onError: failure
-    });
-
-    const attemptMutation = useMutation({
-        mutationFn: payload =>
-            deliveryLogisticsService.recordAttempt(id, payload),
-        onSuccess: () => {
-            setAttempt({ outcome: 'recipient_absent', notes: '' });
-            success('Intento de entrega registrado');
-        },
-        onError: failure
-    });
-
-    const proofMutation = useMutation({
-        mutationFn: payload =>
-            deliveryLogisticsService.recordProof(id, payload),
-        onSuccess: () => success('Comprobante registrado'),
-        onError: failure
-    });
-
-    const uploadMutation = useMutation({
-        mutationFn: file => deliveryService.uploadReceipt(id, file),
-        onSuccess: () => {
-            setReceiptFile(null);
-            success('Archivo de comprobante cargado');
-        },
-        onError: failure
-    });
-
-    function useCurrentPosition() {
-        if (!navigator.geolocation) {
-            pushToast({
-                type: 'error',
-                title: 'GPS no disponible',
-                message: 'Este navegador no admite geolocalización.'
-            });
-            return;
-        }
-
-        setLocating(true);
-
-        navigator.geolocation.getCurrentPosition(
-            position => {
-                setGps({
-                    latitude: String(position.coords.latitude),
-                    longitude: String(position.coords.longitude),
-                    source: 'gps'
-                });
-                setLocating(false);
-            },
-            error => {
-                setLocating(false);
-                pushToast({
-                    type: 'error',
-                    title: 'No se pudo obtener la ubicación',
-                    message: error.message
-                });
-            },
-            {
-                enableHighAccuracy: true,
-                timeout: 12000,
-                maximumAge: 0
-            }
-        );
-    }
-
-    function submitGps(event) {
-        event.preventDefault();
-
-        const latitude = Number(gps.latitude);
-        const longitude = Number(gps.longitude);
-
-        if (
-            gps.latitude.trim() === '' ||
-            gps.longitude.trim() === '' ||
-            !Number.isFinite(latitude) ||
-            !Number.isFinite(longitude)
-        ) {
-            failure(new Error('Ingresá coordenadas válidas.'));
-            return;
-        }
-
-        gpsMutation.mutate({
-            latitude,
-            longitude,
-            source: gps.source
-        });
-    }
-
-    function submitAttempt(event) {
-        event.preventDefault();
-
-        attemptMutation.mutate({
-            outcome: attempt.outcome,
-            ...(attempt.notes.trim()
-                ? { notes: attempt.notes.trim() }
-                : {})
-        });
-    }
-
-    function submitProof(event) {
-        event.preventDefault();
-
-        const payload = {
-            receivedBy: proofForm.receivedBy.trim(),
-            ...(proofForm.relationship.trim()
-                ? { relationship: proofForm.relationship.trim() }
-                : {}),
-            ...(proofForm.notes.trim()
-                ? { notes: proofForm.notes.trim() }
-                : {}),
-            ...(proofForm.signatureUrl.trim()
-                ? { signatureUrl: proofForm.signatureUrl.trim() }
-                : {}),
-            ...(proofForm.photoUrl.trim()
-                ? { photoUrls: [proofForm.photoUrl.trim()] }
-                : {})
-        };
-
-        proofMutation.mutate(payload);
-    }
-
-    const canReport = ['assigned', 'in_transit'].includes(status);
-    const canCompleteProof = status === 'in_transit' && !proof?.receivedAt;
-
-    return (
-        <div className="tracking-operations">
-            <Card className="tracking-card">
-                <SectionHeader
-                    icon={LocateFixed}
-                    title="Registrar ubicación"
-                    subtitle="Solo cuando la entrega está asignada o en tránsito."
-                />
-
-                <form onSubmit={submitGps} className="tracking-form">
-                    <div className="tracking-form-grid">
-                        <label>
-                            Latitud
-                            <input
-                                type="number"
-                                step="any"
-                                min="-90"
-                                max="90"
-                                required
-                                value={gps.latitude}
-                                onChange={event =>
-                                    setGps(value => ({
-                                        ...value,
-                                        latitude: event.target.value,
-                                        source: 'manual'
-                                    }))
-                                }
-                                disabled={!canReport}
-                                placeholder="-32.9468"
-                            />
-                        </label>
-
-                        <label>
-                            Longitud
-                            <input
-                                type="number"
-                                step="any"
-                                min="-180"
-                                max="180"
-                                required
-                                value={gps.longitude}
-                                onChange={event =>
-                                    setGps(value => ({
-                                        ...value,
-                                        longitude: event.target.value,
-                                        source: 'manual'
-                                    }))
-                                }
-                                disabled={!canReport}
-                                placeholder="-60.6393"
-                            />
-                        </label>
-                    </div>
-
-                    <div className="tracking-form-actions">
-                        <Button
-                            type="button"
-                            variant="secondary"
-                            icon={Navigation}
-                            disabled={!canReport || locating}
-                            onClick={useCurrentPosition}
-                        >
-                            {locating ? 'Buscando GPS...' : 'Usar mi ubicación'}
-                        </Button>
-
-                        <Button
-                            type="submit"
-                            loading={gpsMutation.isPending}
-                            disabled={!canReport}
-                        >
-                            Guardar ubicación
-                        </Button>
-                    </div>
-
-                    <p className="tracking-hint">
-                        El navegador solicita permiso para acceder a tu
-                        ubicación. En producción requiere HTTPS.
-                    </p>
-                </form>
-            </Card>
-
-            <Card className="tracking-card">
-                <SectionHeader
-                    icon={ClipboardCheck}
-                    title="Registrar intento"
-                    subtitle="Ausencia, rechazo o inconvenientes de entrega."
-                />
-
-                <form onSubmit={submitAttempt} className="tracking-form">
-                    <label>
-                        Resultado
-                        <select
-                            value={attempt.outcome}
-                            onChange={event =>
-                                setAttempt(value => ({
-                                    ...value,
-                                    outcome: event.target.value
-                                }))
-                            }
-                            disabled={!canReport}
-                        >
-                            {OUTCOMES.map(([value, label]) => (
-                                <option key={value} value={value}>
-                                    {label}
-                                </option>
-                            ))}
-                        </select>
-                    </label>
-
-                    <label>
-                        Observaciones
-                        <textarea
-                            rows={3}
-                            maxLength={1000}
-                            value={attempt.notes}
-                            onChange={event =>
-                                setAttempt(value => ({
-                                    ...value,
-                                    notes: event.target.value
-                                }))
-                            }
-                            disabled={!canReport}
-                            placeholder="¿Qué ocurrió durante la visita?"
-                        />
-                    </label>
-
-                    <Button
-                        type="submit"
-                        loading={attemptMutation.isPending}
-                        disabled={!canReport}
-                    >
-                        Guardar intento
-                    </Button>
-                </form>
-            </Card>
-
-            <Card className="tracking-card tracking-card--wide">
-                <SectionHeader
-                    icon={FileCheck2}
-                    title="Comprobante de entrega"
-                    subtitle="Registrar quién recibió el paquete y su conformidad."
-                />
-
-                <form onSubmit={submitProof} className="tracking-form">
-                    <div className="tracking-form-grid">
-                        <label>
-                            Recibido por *
-                            <input
-                                required
-                                minLength={2}
-                                maxLength={180}
-                                value={proofForm.receivedBy}
-                                onChange={event =>
-                                    setProofForm(value => ({
-                                        ...value,
-                                        receivedBy: event.target.value
-                                    }))
-                                }
-                                disabled={!canCompleteProof}
-                            />
-                        </label>
-
-                        <label>
-                            Relación con el destinatario
-                            <input
-                                maxLength={100}
-                                placeholder="Destinatario, familiar, recepción..."
-                                value={proofForm.relationship}
-                                onChange={event =>
-                                    setProofForm(value => ({
-                                        ...value,
-                                        relationship: event.target.value
-                                    }))
-                                }
-                                disabled={!canCompleteProof}
-                            />
-                        </label>
-
-                        <label>
-                            URL de fotografía (opcional)
-                            <input
-                                type="url"
-                                maxLength={1000}
-                                placeholder="https://..."
-                                value={proofForm.photoUrl}
-                                onChange={event =>
-                                    setProofForm(value => ({
-                                        ...value,
-                                        photoUrl: event.target.value
-                                    }))
-                                }
-                                disabled={!canCompleteProof}
-                            />
-                        </label>
-
-                        <label>
-                            URL de firma (opcional)
-                            <input
-                                type="url"
-                                maxLength={1000}
-                                placeholder="https://..."
-                                value={proofForm.signatureUrl}
-                                onChange={event =>
-                                    setProofForm(value => ({
-                                        ...value,
-                                        signatureUrl: event.target.value
-                                    }))
-                                }
-                                disabled={!canCompleteProof}
-                            />
-                        </label>
-                    </div>
-
-                    <label>
-                        Observaciones
-                        <textarea
-                            rows={2}
-                            maxLength={1000}
-                            value={proofForm.notes}
-                            onChange={event =>
-                                setProofForm(value => ({
-                                    ...value,
-                                    notes: event.target.value
-                                }))
-                            }
-                            disabled={!canCompleteProof}
-                        />
-                    </label>
-
-                    <Button
-                        type="submit"
-                        loading={proofMutation.isPending}
-                        disabled={!canCompleteProof}
-                    >
-                        Registrar comprobante
-                    </Button>
-                </form>
-
-                <div className="tracking-upload">
-                    <label>
-                        <UploadCloud size={19} />
-                        Adjuntar archivo JPG, PNG o PDF
-                        <input
-                            type="file"
-                            accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
-                            onChange={event =>
-                                setReceiptFile(event.target.files?.[0] ?? null)
-                            }
-                        />
-                    </label>
-
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        disabled={!receiptFile}
-                        loading={uploadMutation.isPending}
-                        onClick={() => uploadMutation.mutate(receiptFile)}
-                    >
-                        Subir archivo
-                    </Button>
-                </div>
-
-                <p className="tracking-hint">
-                    El archivo adjunto y el comprobante estructurado son
-                    registros diferentes. Registrar el comprobante no cambia
-                    automáticamente el estado a «Entregado».
-                </p>
-            </Card>
         </div>
     );
 }
@@ -799,6 +362,13 @@ export default function TrackingPage() {
                                     subtitle="Coordenadas guardadas por el repartidor o el operador."
                                 />
 
+                                {!locationsQuery.isError && (
+                                    <DeliveryRouteMap
+                                        currentLocation={current}
+                                        locationHistory={history}
+                                    />
+                                )}
+
                                 {locationsQuery.isError ? (
                                     <p className="tracking-empty">
                                         {getApiErrorMessage(locationsQuery.error)}
@@ -958,11 +528,12 @@ export default function TrackingPage() {
                             </Card>
 
                             {isOperator && (
-                                <TrackingOperations
+                                <TrackingActions
                                     key={activeId}
                                     id={activeId}
                                     status={delivery?.status}
                                     proof={proof}
+                                    trackingCode={delivery?.trackingCode}
                                     refresh={refresh}
                                 />
                             )}

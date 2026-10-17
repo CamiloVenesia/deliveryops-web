@@ -37,6 +37,10 @@ import {
 import CreateDeliveryModal from '../components/CreateDeliveryModal.jsx';
 
 import OperationTimeline from '../components/OperationTimeline.jsx';
+import ShipmentCode from '../components/ShipmentCode.jsx';
+import {
+    DeliveryLogisticsSummary
+} from '../components/ShipmentLogisticsSummary.jsx';
 
 import {
     useToast
@@ -783,12 +787,7 @@ export default function DeliveriesPage() {
                                                         </span>
 
                                                         <div>
-                                                            <strong>
-                                                                #
-                                                                {shortId(
-                                                                    id
-                                                                )}
-                                                            </strong>
+                                                            <ShipmentCode record={delivery} label="Entrega" />
 
                                                             <span>
                                                                 Entrega
@@ -799,12 +798,7 @@ export default function DeliveriesPage() {
 
                                                 <td>
                                                     <div className="table-person">
-                                                        <strong>
-                                                            #
-                                                            {shortId(
-                                                                orderId
-                                                            )}
-                                                        </strong>
+                                                        <strong>{order?.trackingCode || `#${shortId(orderId)}`}</strong>
 
                                                         {order?.deliveryAddress && (
                                                             <span>
@@ -1178,9 +1172,7 @@ function DeliveryDetailsModal({
             onClose={
                 onClose
             }
-            title={`Entrega #${shortId(
-                currentDelivery
-            )}`}
+            title={currentDelivery?.trackingCode ? `Entrega ${currentDelivery.trackingCode}` : `Entrega #${shortId(currentDelivery)}`}
             description="Detalle completo y trazabilidad de la entrega."
             size="lg"
         >
@@ -1212,12 +1204,7 @@ function DeliveryDetailsModal({
                             </span>
 
                             <div>
-                                <strong>
-                                    Entrega #
-                                    {shortId(
-                                        currentDelivery
-                                    )}
-                                </strong>
+                                <strong>Entrega {currentDelivery.trackingCode || `#${shortId(currentDelivery)}`}</strong>
 
                                 <span>
                                     {getEntityId(
@@ -1243,7 +1230,11 @@ function DeliveryDetailsModal({
                         </div>
                     </div>
 
-                    <div className="detail-grid">
+                    <DeliveryLogisticsSummary
+    delivery={currentDelivery}
+    order={currentOrder}
+/>
+<div className="detail-grid">
                         <Detail
                             label="Pedido"
                             value={`#${shortId(
@@ -1421,7 +1412,7 @@ function DeliveryDetailsModal({
                                 </div>
 
                                 <StatusBadge
-                                    status="delivered"
+                                    status={currentDelivery.status}
                                 />
                             </div>
                         ) : (
