@@ -1,0 +1,119 @@
+
+.receipt-viewer {
+    display: grid;
+    gap: 12px;
+    margin-top: 18px;
+    padding-top: 17px;
+    border-top: 1px solid var(--border-subtle);
+    min-width: 0;
+}
+
+.receipt-viewer__heading {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: var(--slate-800);
+    font-size: 12px;
+}
+
+.receipt-viewer__heading svg {
+    color: var(--brand-600);
+}
+
+.receipt-viewer__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+}
+
+.receipt-viewer__hint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    color: var(--slate-500);
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.receipt-viewer__muted {
+    margin: 0;
+    color: var(--slate-500);
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.receipt-viewer__error {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    padding: 12px;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+    background: #fef2f2;
+    color: #991b1b;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.receipt-viewer__error svg {
+    flex-shrink: 0;
+}
+
+.receipt-viewer__preview {
+    display: grid;
+    gap: 12px;
+    min-height: 260px;
+}
+
+.receipt-viewer__preview-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 12px;
+    font-weight: 650;
+    color: var(--slate-700);
+}
+
+.receipt-viewer__preview-toolbar button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border-default);
+    border-radius: 8px;
+    background: white;
+    color: var(--slate-700);
+    cursor: pointer;
+}
+
+.receipt-viewer__preview img {
+    display: block;
+    width: 100%;
+    max-height: 65vh;
+    object-fit: contain;
+    border-radius: 10px;
+    background: var(--slate-50);
+}
+
+.receipt-viewer__preview iframe {
+    width: 100%;
+    height: 65vh;
+    min-height: 360px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    background: white;
+}
+
+@media (max-width: 650px) {
+    .receipt-viewer__actions .button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .receipt-viewer__preview iframe {
+        min-height: 280px;
+    }
+}
