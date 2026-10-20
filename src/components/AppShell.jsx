@@ -38,6 +38,7 @@ const PAGE_NAMES = {
     '/deliveries': 'Entregas',
     '/search': 'Búsqueda avanzada',
     '/tracking': 'Seguimiento',
+    '/drivers': 'Repartidores',
     '/depots': 'Depósitos y sucursales',
     '/users': 'Usuarios',
     '/profile': 'Mi perfil'
@@ -75,6 +76,18 @@ const NAV_ITEMS = [
         roles: ['admin', 'customer', 'driver']
     },
     {
+        label: 'Repartidores',
+        path: '/drivers',
+        icon: UsersRound,
+        roles: ['admin']
+    },
+    {
+        label: 'Mi disponibilidad',
+        path: '/drivers',
+        icon: UserRound,
+        roles: ['driver']
+    },
+    {
         label: 'Depósitos',
         path: '/depots',
         icon: Warehouse,
@@ -102,7 +115,9 @@ export default function AppShell() {
     );
 
     const pageTitle =
-        PAGE_NAMES[location.pathname] || 'DeliveryOps';
+        location.pathname === '/drivers' && role === 'driver'
+            ? 'Mi disponibilidad'
+            : PAGE_NAMES[location.pathname] || 'DeliveryOps';
 
     async function handleLogout() {
         setProfileOpen(false);
@@ -165,7 +180,7 @@ export default function AppShell() {
 
                         return (
                             <NavLink
-                                key={item.path}
+                                key={`${item.path}-${item.label}`}
                                 to={item.path}
                                 end={item.path === '/'}
                                 onClick={() => setSidebarOpen(false)}

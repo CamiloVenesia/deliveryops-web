@@ -18,6 +18,7 @@ const OrdersPage = lazy(() => import('./pages/OrdersPage.jsx'));
 const DeliveriesPage = lazy(() => import('./pages/DeliveriesPage.jsx'));
 const TrackingPage = lazy(() => import('./pages/TrackingPage.jsx'));
 const OperationsSearchPage = lazy(() => import('./pages/OperationsSearchPage.jsx'));
+const DriversPage = lazy(() => import('./pages/DriversPage.jsx'));
 const DepotsPage = lazy(() => import('./pages/DepotsPage.jsx'));
 const UsersPage = lazy(() => import('./pages/UsersPage.jsx'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage.jsx'));
@@ -90,6 +91,19 @@ export default function App() {
                             <Route
                                 path="search"
                                 element={<OperationsSearchPage />}
+                            />
+                        </Route>
+
+                        <Route
+                            element={
+                                <RoleRoute
+                                    allowedRoles={['admin', 'driver']}
+                                />
+                            }
+                        >
+                            <Route
+                                path="drivers"
+                                element={<DriversPage />}
                             />
                         </Route>
 
