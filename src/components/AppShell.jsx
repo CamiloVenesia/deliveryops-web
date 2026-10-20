@@ -9,6 +9,7 @@ import {
 
 import {
     Boxes,
+    ClipboardCheck,
     ChevronDown,
     LayoutDashboard,
     LogOut,
@@ -39,6 +40,7 @@ const PAGE_NAMES = {
     '/search': 'Búsqueda avanzada',
     '/tracking': 'Seguimiento',
     '/drivers': 'Repartidores',
+    '/dispatch': 'Despacho inteligente',
     '/depots': 'Depósitos y sucursales',
     '/users': 'Usuarios',
     '/profile': 'Mi perfil'
@@ -74,6 +76,12 @@ const NAV_ITEMS = [
         path: '/tracking',
         icon: MapPinned,
         roles: ['admin', 'customer', 'driver']
+    },
+    {
+        label: 'Despacho',
+        path: '/dispatch',
+        icon: ClipboardCheck,
+        roles: ['admin']
     },
     {
         label: 'Repartidores',
