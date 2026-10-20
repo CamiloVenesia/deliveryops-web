@@ -18,6 +18,7 @@ import {
     MapPinned,
     Menu,
     Package,
+    Route,
     Search,
     Truck,
     UserRound,
@@ -43,6 +44,7 @@ const PAGE_NAMES = {
     '/tracking': 'Seguimiento',
     '/drivers': 'Repartidores',
     '/dispatch': 'Despacho inteligente',
+    '/route-planning': 'Planificación de rutas',
     '/depots': 'Depósitos y sucursales',
     '/users': 'Usuarios',
     '/profile': 'Mi perfil',
@@ -85,6 +87,12 @@ const NAV_ITEMS = [
         path: '/dispatch',
         icon: ClipboardCheck,
         roles: ['admin']
+    },
+    {
+        label: 'Planificación de rutas',
+        path: '/route-planning',
+        icon: Route,
+        roles: ['admin', 'driver']
     },
     {
         label: 'Repartidores',

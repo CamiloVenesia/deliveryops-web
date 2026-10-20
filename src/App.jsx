@@ -21,6 +21,7 @@ const OperationsSearchPage = lazy(() => import('./pages/OperationsSearchPage.jsx
 const DriversPage = lazy(() => import('./pages/DriversPage.jsx'));
 const DispatchPage = lazy(() => import('./pages/DispatchPage.jsx'));
 const NotificationsPage = lazy(() => import('./pages/NotificationsPage.jsx'));
+const RoutePlanningPage = lazy(() => import('./pages/RoutePlanningPage.jsx'));
 const DepotsPage = lazy(() => import('./pages/DepotsPage.jsx'));
 const UsersPage = lazy(() => import('./pages/UsersPage.jsx'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage.jsx'));
@@ -62,10 +63,7 @@ export default function App() {
                         <Route
                             element={
                                 <RoleRoute
-                                    allowedRoles={[
-                                        'admin',
-                                        'customer'
-                                    ]}
+                                    allowedRoles={['admin', 'customer']}
                                 />
                             }
                         >
@@ -104,9 +102,7 @@ export default function App() {
 
                         <Route
                             element={
-                                <RoleRoute
-                                    allowedRoles={['admin']}
-                                />
+                                <RoleRoute allowedRoles={['admin']} />
                             }
                         >
                             <Route
@@ -118,10 +114,7 @@ export default function App() {
                         <Route
                             element={
                                 <RoleRoute
-                                    allowedRoles={[
-                                        'admin',
-                                        'driver'
-                                    ]}
+                                    allowedRoles={['admin', 'driver']}
                                 />
                             }
                         >
@@ -129,15 +122,17 @@ export default function App() {
                                 path="drivers"
                                 element={<DriversPage />}
                             />
+
+                            <Route
+                                path="route-planning"
+                                element={<RoutePlanningPage />}
+                            />
                         </Route>
 
                         <Route
                             element={
                                 <RoleRoute
-                                    allowedRoles={[
-                                        'admin',
-                                        'store'
-                                    ]}
+                                    allowedRoles={['admin', 'store']}
                                 />
                             }
                         >
@@ -149,9 +144,7 @@ export default function App() {
 
                         <Route
                             element={
-                                <RoleRoute
-                                    allowedRoles={['admin']}
-                                />
+                                <RoleRoute allowedRoles={['admin']} />
                             }
                         >
                             <Route
@@ -177,24 +170,14 @@ export default function App() {
 
                         <Route
                             path="*"
-                            element={
-                                <Navigate
-                                    to="/404"
-                                    replace
-                                />
-                            }
+                            element={<Navigate to="/404" replace />}
                         />
                     </Route>
                 </Route>
 
                 <Route
                     path="*"
-                    element={
-                        <Navigate
-                            to="/login"
-                            replace
-                        />
-                    }
+                    element={<Navigate to="/login" replace />}
                 />
             </Routes>
         </Suspense>
