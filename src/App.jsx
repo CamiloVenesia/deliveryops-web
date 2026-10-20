@@ -20,6 +20,7 @@ const TrackingPage = lazy(() => import('./pages/TrackingPage.jsx'));
 const OperationsSearchPage = lazy(() => import('./pages/OperationsSearchPage.jsx'));
 const DriversPage = lazy(() => import('./pages/DriversPage.jsx'));
 const DispatchPage = lazy(() => import('./pages/DispatchPage.jsx'));
+const NotificationsPage = lazy(() => import('./pages/NotificationsPage.jsx'));
 const DepotsPage = lazy(() => import('./pages/DepotsPage.jsx'));
 const UsersPage = lazy(() => import('./pages/UsersPage.jsx'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage.jsx'));
@@ -42,7 +43,10 @@ export default function App() {
     return (
         <Suspense fallback={<RouteLoading />}>
             <Routes>
-                <Route path="/login" element={<LoginPage />} />
+                <Route
+                    path="/login"
+                    element={<LoginPage />}
+                />
 
                 <Route element={<ProtectedRoute />}>
                     <Route element={<AppShell />}>
@@ -58,7 +62,10 @@ export default function App() {
                         <Route
                             element={
                                 <RoleRoute
-                                    allowedRoles={['admin', 'customer']}
+                                    allowedRoles={[
+                                        'admin',
+                                        'customer'
+                                    ]}
                                 />
                             }
                         >
@@ -97,7 +104,9 @@ export default function App() {
 
                         <Route
                             element={
-                                <RoleRoute allowedRoles={['admin']} />
+                                <RoleRoute
+                                    allowedRoles={['admin']}
+                                />
                             }
                         >
                             <Route
@@ -109,7 +118,10 @@ export default function App() {
                         <Route
                             element={
                                 <RoleRoute
-                                    allowedRoles={['admin', 'driver']}
+                                    allowedRoles={[
+                                        'admin',
+                                        'driver'
+                                    ]}
                                 />
                             }
                         >
@@ -122,7 +134,10 @@ export default function App() {
                         <Route
                             element={
                                 <RoleRoute
-                                    allowedRoles={['admin', 'store']}
+                                    allowedRoles={[
+                                        'admin',
+                                        'store'
+                                    ]}
                                 />
                             }
                         >
@@ -134,7 +149,9 @@ export default function App() {
 
                         <Route
                             element={
-                                <RoleRoute allowedRoles={['admin']} />
+                                <RoleRoute
+                                    allowedRoles={['admin']}
+                                />
                             }
                         >
                             <Route
@@ -149,20 +166,35 @@ export default function App() {
                         />
 
                         <Route
+                            path="notifications"
+                            element={<NotificationsPage />}
+                        />
+
+                        <Route
                             path="404"
                             element={<NotFoundPage />}
                         />
 
                         <Route
                             path="*"
-                            element={<Navigate to="/404" replace />}
+                            element={
+                                <Navigate
+                                    to="/404"
+                                    replace
+                                />
+                            }
                         />
                     </Route>
                 </Route>
 
                 <Route
                     path="*"
-                    element={<Navigate to="/login" replace />}
+                    element={
+                        <Navigate
+                            to="/login"
+                            replace
+                        />
+                    }
                 />
             </Routes>
         </Suspense>

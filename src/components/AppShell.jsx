@@ -1,5 +1,6 @@
 
 import { useMemo, useState } from 'react';
+
 import {
     NavLink,
     Outlet,
@@ -8,6 +9,7 @@ import {
 } from 'react-router-dom';
 
 import {
+    Bell,
     Boxes,
     ClipboardCheck,
     ChevronDown,
@@ -43,7 +45,8 @@ const PAGE_NAMES = {
     '/dispatch': 'Despacho inteligente',
     '/depots': 'Depósitos y sucursales',
     '/users': 'Usuarios',
-    '/profile': 'Mi perfil'
+    '/profile': 'Mi perfil',
+    '/notifications': 'Notificaciones'
 };
 
 const NAV_ITEMS = [
@@ -106,11 +109,18 @@ const NAV_ITEMS = [
         path: '/users',
         icon: UsersRound,
         roles: ['admin']
+    },
+    {
+        label: 'Notificaciones',
+        path: '/notifications',
+        icon: Bell,
+        roles: ['admin', 'customer', 'driver', 'store']
     }
 ];
 
 export default function AppShell() {
     const { user, role, logout } = useAuth();
+
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -118,19 +128,27 @@ export default function AppShell() {
     const [profileOpen, setProfileOpen] = useState(false);
 
     const navigation = useMemo(
-        () => NAV_ITEMS.filter(item => item.roles.includes(role)),
+        () => NAV_ITEMS.filter(
+            item => item.roles.includes(role)
+        ),
         [role]
     );
 
     const pageTitle =
-        location.pathname === '/drivers' && role === 'driver'
+        location.pathname === '/drivers' &&
+        role === 'driver'
             ? 'Mi disponibilidad'
-            : PAGE_NAMES[location.pathname] || 'DeliveryOps';
+            : PAGE_NAMES[location.pathname] ||
+              'DeliveryOps';
 
     async function handleLogout() {
         setProfileOpen(false);
+
         await logout();
-        navigate('/login', { replace: true });
+
+        navigate('/login', {
+            replace: true
+        });
     }
 
     function handleProfileNavigation() {
@@ -143,7 +161,9 @@ export default function AppShell() {
             <button
                 type="button"
                 className={`sidebar-backdrop ${
-                    sidebarOpen ? 'sidebar-backdrop--visible' : ''
+                    sidebarOpen
+                        ? 'sidebar-backdrop--visible'
+                        : ''
                 }`}
                 onClick={() => setSidebarOpen(false)}
                 aria-label="Cerrar menú"
@@ -151,7 +171,9 @@ export default function AppShell() {
 
             <aside
                 className={`sidebar ${
-                    sidebarOpen ? 'sidebar--open' : ''
+                    sidebarOpen
+                        ? 'sidebar--open'
+                        : ''
                 }`}
             >
                 <div className="sidebar__header">
@@ -191,7 +213,9 @@ export default function AppShell() {
                                 key={`${item.path}-${item.label}`}
                                 to={item.path}
                                 end={item.path === '/'}
-                                onClick={() => setSidebarOpen(false)}
+                                onClick={() =>
+                                    setSidebarOpen(false)
+                                }
                                 className={({ isActive }) =>
                                     `sidebar__link ${
                                         isActive
@@ -213,22 +237,31 @@ export default function AppShell() {
 
                         <div>
                             <strong>Sesión protegida</strong>
-                            <span>Protección de acceso activa</span>
+                            <span>
+                                Protección de acceso activa
+                            </span>
                         </div>
                     </div>
 
                     <NavLink
                         to="/profile"
                         className="sidebar__profile"
-                        onClick={() => setSidebarOpen(false)}
+                        onClick={() =>
+                            setSidebarOpen(false)
+                        }
                     >
                         <span className="avatar">
                             {getInitials(user)}
                         </span>
 
                         <div>
-                            <strong>{getPersonName(user)}</strong>
-                            <span>{roleLabel(role)}</span>
+                            <strong>
+                                {getPersonName(user)}
+                            </strong>
+
+                            <span>
+                                {roleLabel(role)}
+                            </span>
                         </div>
                     </NavLink>
                 </div>
@@ -240,7 +273,9 @@ export default function AppShell() {
                         <button
                             type="button"
                             className="topbar__menu-button"
-                            onClick={() => setSidebarOpen(true)}
+                            onClick={() =>
+                                setSidebarOpen(true)
+                            }
                             aria-label="Abrir menú"
                         >
                             <Menu size={20} />
@@ -268,7 +303,9 @@ export default function AppShell() {
                                 type="button"
                                 className="profile-menu__trigger"
                                 onClick={() =>
-                                    setProfileOpen(current => !current)
+                                    setProfileOpen(
+                                        current => !current
+                                    )
                                 }
                                 aria-expanded={profileOpen}
                                 aria-label="Opciones de perfil"
@@ -294,7 +331,9 @@ export default function AppShell() {
                                 <div className="profile-menu__dropdown">
                                     <button
                                         type="button"
-                                        onClick={handleProfileNavigation}
+                                        onClick={
+                                            handleProfileNavigation
+                                        }
                                     >
                                         <UserRound size={16} />
                                         Mi perfil
