@@ -1,8 +1,7 @@
 
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
     Activity,
     ArrowRight,
@@ -32,7 +31,6 @@ import {
 
 import { analyticsService } from '../api/analytics.service.js';
 import { getApiErrorMessage } from '../api/normalizers.js';
-
 import {
     Card,
     EmptyState,
@@ -41,7 +39,7 @@ import {
     PageHeader,
     StatusBadge
 } from '../components/ui.jsx';
-
+import OperationsIntelligencePanel from '../components/OperationsIntelligencePanel.jsx';
 import {
     formatMoney,
     formatNumber,
@@ -98,12 +96,19 @@ function financeRows(finances) {
     }));
 }
 
-function SectionTitle({ title, description, action }) {
+function SectionTitle({
+    title,
+    description,
+    action
+}) {
     return (
         <div className="analytics-panel-title">
             <div>
                 <h2>{title}</h2>
-                {description && <p>{description}</p>}
+
+                {description && (
+                    <p>{description}</p>
+                )}
             </div>
 
             {action}
@@ -115,6 +120,8 @@ export default function AdminDashboardPage() {
     const [days, setDays] = useState(14);
     const [refreshNotice, setRefreshNotice] = useState('');
 
+    const queryClient = useQueryClient();
+
     const query = useQuery({
         queryKey: ['analytics', 'dashboard', days],
         queryFn: () => analyticsService.getDashboard(days),
@@ -124,12 +131,17 @@ export default function AdminDashboardPage() {
     async function refreshDashboard() {
         setRefreshNotice('');
 
-        const result = await query.refetch();
+        const [result] = await Promise.all([
+            query.refetch(),
+            queryClient.invalidateQueries({
+                queryKey: ['operations-intelligence']
+            })
+        ]);
 
         setRefreshNotice(
             result.error
                 ? `Error al actualizar: ${getApiErrorMessage(result.error)}`
-                : 'Consulta completada. Las cifras cambian cuando se actualizan los estados de pedidos y entregas.'
+                : 'Consulta completada. Las cifras reflejan los datos actuales de la operación.'
         );
     }
 
@@ -146,7 +158,6 @@ export default function AdminDashboardPage() {
 
     const data = query.data;
     const overview = data?.overview;
-
     const daily = data?.activity?.daily ?? [];
     const recentOrders = data?.activity?.recentOrders ?? [];
     const finance = financeRows(data?.finances);
@@ -199,7 +210,6 @@ export default function AdminDashboardPage() {
             <div className="analytics-toolbar">
                 <div className="analytics-live">
                     <span className="analytics-live__dot" />
-
                     Datos reales de la API
 
                     {lastUpdated && (
@@ -221,7 +231,7 @@ export default function AdminDashboardPage() {
                 <div
                     className="analytics-periods"
                     role="group"
-                    aria-label="Período del gráfico"
+                    aria-label="Período del gráfico y rendimiento"
                 >
                     {PERIODS.map(period => (
                         <button
@@ -304,9 +314,7 @@ export default function AdminDashboardPage() {
                             icon={Route}
                             tone="violet"
                             label="Tasa de entrega"
-                            value={formatPercentage(
-                                overview.deliveryRate
-                            )}
+                            value={formatPercentage(overview.deliveryRate)}
                             description="Sobre pedidos finalizados"
                         />
 
@@ -341,13 +349,13 @@ export default function AdminDashboardPage() {
                         />
                     </div>
 
+                    <OperationsIntelligencePanel days={days} />
+
                     <div className="analytics-grid">
                         <Card className="analytics-panel analytics-panel--main">
                             <SectionTitle
                                 title="Actividad de la operación"
-                                description={
-                                    `Pedidos creados y entregas completadas · últimos ${days} días`
-                                }
+                                description={`Pedidos creados y entregas completadas · últimos ${days} días`}
                             />
 
                             {daily.length ? (
@@ -467,11 +475,9 @@ export default function AdminDashboardPage() {
                         <Card className="analytics-panel">
                             <SectionTitle
                                 title="Estado de pedidos"
-                                description={
-                                    `${formatNumber(
-                                        overview.ordersTotal
-                                    )} pedidos en total`
-                                }
+                                description={`${formatNumber(
+                                    overview.ordersTotal
+                                )} pedidos en total`}
                             />
 
                             {statusData.length ? (
@@ -577,8 +583,8 @@ export default function AdminDashboardPage() {
                                         </div>
 
                                         <small>
-                                            Importes registrados; no
-                                            representan beneficio neto.
+                                            Importes registrados;
+                                            no representan beneficio neto.
                                         </small>
                                     </div>
                                 ))
@@ -624,7 +630,9 @@ export default function AdminDashboardPage() {
                                                     <td>
                                                         <strong>
                                                             {order.trackingCode ||
-                                                                shortId(order.id)}
+                                                                shortId(
+                                                                    order.id
+                                                                )}
                                                         </strong>
                                                     </td>
 
@@ -665,9 +673,11 @@ export default function AdminDashboardPage() {
                     </div>
 
                     <p className="analytics-footnote">
-                        Indicadores globales acumulados, salvo la serie
-                        diaria y los pedidos creados hoy. Los períodos
-                        modifican solamente el gráfico.
+                        Los indicadores principales son acumulados,
+                        salvo los pedidos creados hoy.
+                        El período seleccionado modifica el gráfico
+                        de actividad y el rendimiento de repartidores.
+                        Las alertas reflejan la situación actual.
                     </p>
                 </>
             )}
