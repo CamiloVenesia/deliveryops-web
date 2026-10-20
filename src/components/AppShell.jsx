@@ -1,6 +1,5 @@
 
 import { useMemo, useState } from 'react';
-
 import {
     NavLink,
     Outlet,
@@ -16,6 +15,7 @@ import {
     MapPinned,
     Menu,
     Package,
+    Search,
     Truck,
     UserRound,
     UsersRound,
@@ -32,10 +32,11 @@ import {
     roleLabel
 } from '../utils/formatters.js';
 
-const pageNames = {
+const PAGE_NAMES = {
     '/': 'Resumen operativo',
     '/orders': 'Pedidos',
     '/deliveries': 'Entregas',
+    '/search': 'Búsqueda avanzada',
     '/tracking': 'Seguimiento',
     '/depots': 'Depósitos y sucursales',
     '/users': 'Usuarios',
@@ -59,6 +60,12 @@ const NAV_ITEMS = [
         label: 'Entregas',
         path: '/deliveries',
         icon: Truck,
+        roles: ['admin', 'customer', 'driver']
+    },
+    {
+        label: 'Búsqueda avanzada',
+        path: '/search',
+        icon: Search,
         roles: ['admin', 'customer', 'driver']
     },
     {
@@ -94,7 +101,8 @@ export default function AppShell() {
         [role]
     );
 
-    const pageTitle = pageNames[location.pathname] || 'DeliveryOps';
+    const pageTitle =
+        PAGE_NAMES[location.pathname] || 'DeliveryOps';
 
     async function handleLogout() {
         setProfileOpen(false);
@@ -118,7 +126,11 @@ export default function AppShell() {
                 aria-label="Cerrar menú"
             />
 
-            <aside className={`sidebar ${sidebarOpen ? 'sidebar--open' : ''}`}>
+            <aside
+                className={`sidebar ${
+                    sidebarOpen ? 'sidebar--open' : ''
+                }`}
+            >
                 <div className="sidebar__header">
                     <Brand inverse />
 
@@ -159,7 +171,9 @@ export default function AppShell() {
                                 onClick={() => setSidebarOpen(false)}
                                 className={({ isActive }) =>
                                     `sidebar__link ${
-                                        isActive ? 'sidebar__link--active' : ''
+                                        isActive
+                                            ? 'sidebar__link--active'
+                                            : ''
                                     }`
                                 }
                             >
@@ -230,7 +244,9 @@ export default function AppShell() {
                             <button
                                 type="button"
                                 className="profile-menu__trigger"
-                                onClick={() => setProfileOpen(current => !current)}
+                                onClick={() =>
+                                    setProfileOpen(current => !current)
+                                }
                                 aria-expanded={profileOpen}
                                 aria-label="Opciones de perfil"
                             >
@@ -239,8 +255,13 @@ export default function AppShell() {
                                 </span>
 
                                 <div>
-                                    <strong>{getPersonName(user)}</strong>
-                                    <span>{roleLabel(role)}</span>
+                                    <strong>
+                                        {getPersonName(user)}
+                                    </strong>
+
+                                    <span>
+                                        {roleLabel(role)}
+                                    </span>
                                 </div>
 
                                 <ChevronDown size={16} />

@@ -17,6 +17,7 @@ const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage.jsx'));
 const OrdersPage = lazy(() => import('./pages/OrdersPage.jsx'));
 const DeliveriesPage = lazy(() => import('./pages/DeliveriesPage.jsx'));
 const TrackingPage = lazy(() => import('./pages/TrackingPage.jsx'));
+const OperationsSearchPage = lazy(() => import('./pages/OperationsSearchPage.jsx'));
 const DepotsPage = lazy(() => import('./pages/DepotsPage.jsx'));
 const UsersPage = lazy(() => import('./pages/UsersPage.jsx'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage.jsx'));
@@ -59,26 +60,50 @@ export default function App() {
                                 />
                             }
                         >
-                            <Route path="orders" element={<OrdersPage />} />
+                            <Route
+                                path="orders"
+                                element={<OrdersPage />}
+                            />
                         </Route>
 
                         <Route
                             element={
                                 <RoleRoute
-                                    allowedRoles={['admin', 'customer', 'driver']}
+                                    allowedRoles={[
+                                        'admin',
+                                        'customer',
+                                        'driver'
+                                    ]}
                                 />
                             }
                         >
-                            <Route path="deliveries" element={<DeliveriesPage />} />
-                            <Route path="tracking" element={<TrackingPage />} />
+                            <Route
+                                path="deliveries"
+                                element={<DeliveriesPage />}
+                            />
+
+                            <Route
+                                path="tracking"
+                                element={<TrackingPage />}
+                            />
+
+                            <Route
+                                path="search"
+                                element={<OperationsSearchPage />}
+                            />
                         </Route>
 
                         <Route
                             element={
-                                <RoleRoute allowedRoles={['admin', 'store']} />
+                                <RoleRoute
+                                    allowedRoles={['admin', 'store']}
+                                />
                             }
                         >
-                            <Route path="depots" element={<DepotsPage />} />
+                            <Route
+                                path="depots"
+                                element={<DepotsPage />}
+                            />
                         </Route>
 
                         <Route
@@ -86,11 +111,22 @@ export default function App() {
                                 <RoleRoute allowedRoles={['admin']} />
                             }
                         >
-                            <Route path="users" element={<UsersPage />} />
+                            <Route
+                                path="users"
+                                element={<UsersPage />}
+                            />
                         </Route>
 
-                        <Route path="profile" element={<ProfilePage />} />
-                        <Route path="404" element={<NotFoundPage />} />
+                        <Route
+                            path="profile"
+                            element={<ProfilePage />}
+                        />
+
+                        <Route
+                            path="404"
+                            element={<NotFoundPage />}
+                        />
+
                         <Route
                             path="*"
                             element={<Navigate to="/404" replace />}
@@ -98,7 +134,10 @@ export default function App() {
                     </Route>
                 </Route>
 
-                <Route path="*" element={<Navigate to="/login" replace />} />
+                <Route
+                    path="*"
+                    element={<Navigate to="/login" replace />}
+                />
             </Routes>
         </Suspense>
     );
